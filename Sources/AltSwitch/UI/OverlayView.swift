@@ -50,15 +50,20 @@ public class OverlayViewModel: ObservableObject {
                 if selectedIndex - cols >= 0 {
                     selectedIndex -= cols
                 } else {
-                    let wrapped = selectedIndex - cols + windows.count
-                    selectedIndex = (wrapped < windows.count) ? wrapped : ((selectedIndex - 1 + windows.count) % windows.count)
+                    // Wrap to bottom-most item in the same column
+                    var target = selectedIndex
+                    while target + cols < windows.count {
+                        target += cols
+                    }
+                    selectedIndex = target
                 }
             case .down:
+                let col = selectedIndex % cols
                 if selectedIndex + cols < windows.count {
                     selectedIndex += cols
                 } else {
-                    let wrapped = (selectedIndex + cols) % windows.count
-                    selectedIndex = wrapped
+                    // Wrap to top-most item in the same column
+                    selectedIndex = col
                 }
             }
         }

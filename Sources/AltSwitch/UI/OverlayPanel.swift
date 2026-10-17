@@ -39,7 +39,6 @@ public class OverlayPanel: NSPanel {
 
         viewModel.onCancel = { [weak self] in
             self?.hide()
-            self?.onDismissed?()
         }
 
         let view = OverlayView(viewModel: viewModel)
@@ -92,10 +91,10 @@ public class OverlayPanel: NSPanel {
                 let maxGridHeight = screen.visibleFrame.height * 0.80
 
                 let cardW: CGFloat = 240
-                let cardH: CGFloat = 175
+                let cardH: CGFloat = 185
                 let spacing: CGFloat = 14
                 let overheadW: CGFloat = 72
-                let overheadH: CGFloat = 146
+                let overheadH: CGFloat = 144
 
                 let count = windows.count
                 if count <= 0 {
@@ -103,21 +102,18 @@ public class OverlayPanel: NSPanel {
                     panelHeight = 220
                 } else {
                     let maxCols = max(1, Int((maxGridWidth - overheadW + spacing) / (cardW + spacing)))
+                    let maxColsLimit = min(maxCols, 5)
                     let cols: Int
                     if count <= 3 {
                         cols = max(1, count)
                     } else if count == 4 {
-                        cols = min(maxCols, 2)
+                        cols = min(maxColsLimit, 2)
+                    } else if count <= 6 {
+                        cols = min(maxColsLimit, 3)
+                    } else if count <= 8 {
+                        cols = min(maxColsLimit, 4)
                     } else {
-                        var candidateCols = 2
-                        for c in 2...min(count, maxCols) {
-                            let r = Int(ceil(Double(count) / Double(c)))
-                            let neededH = CGFloat(r) * cardH + CGFloat(max(0, r - 1)) * spacing + overheadH
-                            if neededH <= maxGridHeight {
-                                candidateCols = c
-                            }
-                        }
-                        cols = min(candidateCols, 5)
+                        cols = maxColsLimit
                     }
 
                     viewModel.gridColumns = cols
@@ -127,15 +123,17 @@ public class OverlayPanel: NSPanel {
                     let contentH = CGFloat(rows) * cardH + CGFloat(max(0, rows - 1)) * spacing + overheadH
 
                     panelWidth = max(min(contentW, maxGridWidth), 400)
-                    panelHeight = max(min(contentH, maxGridHeight), 260)
+                    panelHeight = max(min(contentH, maxGridHeight), 330)
                 }
             } else {
                 // Compact Carousel mode
-                let cardWidth: CGFloat = 244
-                let totalCardsWidth = CGFloat(windows.count) * cardWidth + 60
-                let maxWidth = min(screen.visibleFrame.width * 0.9, 860)
+                let cardWidth: CGFloat = 240
+                let spacing: CGFloat = 14
+                let overheadW: CGFloat = 72
+                let totalCardsWidth = CGFloat(windows.count) * cardWidth + CGFloat(max(0, windows.count - 1)) * spacing + overheadW
+                let maxWidth = min(screen.visibleFrame.width * 0.90, 920)
                 panelWidth = max(min(totalCardsWidth, maxWidth), 400)
-                panelHeight = 265
+                panelHeight = 330
             }
 
             let x = screen.visibleFrame.origin.x + (screen.visibleFrame.width - panelWidth) / 2

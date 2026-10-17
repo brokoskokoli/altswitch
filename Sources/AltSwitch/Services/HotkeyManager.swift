@@ -19,12 +19,14 @@ public class HotkeyManager {
             if !isOverlayActive {
                 activeTriggerModifier = nil
                 wasShiftDown = false
+                shiftWasUsedWithKey = false
             }
         }
     }
 
     private var activeTriggerModifier: CGEventFlags?
     private var wasShiftDown: Bool = false
+    private var shiftWasUsedWithKey: Bool = false
 
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
@@ -138,6 +140,9 @@ public class HotkeyManager {
             if keyCode == 48 && isTriggerModifierDown {
                 let forward = !isShiftDown
                 wasShiftDown = isShiftDown
+                if isShiftDown {
+                    shiftWasUsedWithKey = true
+                }
 
                 if !isOverlayActive {
                     isOverlayActive = true
@@ -217,17 +222,23 @@ public class HotkeyManager {
                 }
 
                 // Trigger modifier is still held down!
-                // Check if Shift was just pressed (transition from not pressed to pressed)
                 let isShiftNowDown = flags.contains(.maskShift)
                 if isShiftNowDown && !wasShiftDown {
-                    // User tapped / pressed Shift while holding the trigger modifier -> step backward!
-                    DispatchQueue.main.async { [weak self] in
-                        self?.delegate?.hotkeyCycle(forward: false)
+                    // Shift was just pressed
+                    shiftWasUsedWithKey = false
+                } else if !isShiftNowDown && wasShiftDown {
+                    // Shift was just released!
+                    // If Shift was tapped alone (not used with Tab), step backward
+                    if !shiftWasUsedWithKey {
+                        DispatchQueue.main.async { [weak self] in
+                            self?.delegate?.hotkeyCycle(forward: false)
+                        }
                     }
                 }
                 wasShiftDown = isShiftNowDown
             } else {
                 wasShiftDown = flags.contains(.maskShift)
+                shiftWasUsedWithKey = false
             }
         }
 
