@@ -72,7 +72,7 @@ jobs:
             CERTIFICATE_PATH=$RUNNER_TEMP/developer_id.p12
 
             # Decode certificate
-            echo "${APPLE_CERTIFICATE_BASE64}" | base64 --decode > "${CERTIFICATE_PATH}"
+            printf '%s' "${APPLE_CERTIFICATE_BASE64}" | base64 --decode > "${CERTIFICATE_PATH}"
 
             # Create and configure temporary keychain
             security create-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
@@ -105,7 +105,7 @@ jobs:
               if [ "$HAS_API_KEY_AUTH" = true ]; then
                 echo "-> Submitting DMG for notarization using App Store Connect API Key..."
                 KEY_PATH="$RUNNER_TEMP/AuthKey_${APPLE_API_KEY_ID}.p8"
-                echo "${APPLE_API_KEY_BASE64}" | base64 --decode > "${KEY_PATH}"
+                printf '%s' "${APPLE_API_KEY_BASE64}" | base64 --decode > "${KEY_PATH}"
                 chmod 600 "${KEY_PATH}"
 
                 xcrun notarytool submit "AltSwitch-${TAG}.dmg" \
@@ -129,6 +129,10 @@ jobs:
               echo "-> Stapling notarization ticket to App bundle..."
               xcrun stapler staple AltSwitch.app || true
               ditto -c -k --keepParent AltSwitch.app "AltSwitch-${TAG}.zip"
+
+              # Cleanup temporary credentials and keychain
+              rm -f "${KEY_PATH:-}" "${CERTIFICATE_PATH:-}"
+              security delete-keychain "${KEYCHAIN_PATH}" 2>/dev/null || true
 
               echo "SIGNED=true" >> "$GITHUB_OUTPUT"
               exit 0
