@@ -180,10 +180,48 @@ altswitch/
 ## 🚢 CI/CD & GitHub Actions Release
 
 Dieses Repository enthält eine produktionsreife GitHub Actions Release Pipeline (`.github/workflows/release.yml`):
-- **Automatischer Trigger** bei Erstellung eines Git-Tags (`v*`, z.B. `v1.0.0`).
-- **Apple Developer ID Signierung & Notarisierung**: Unterstützt automatische Signierung mit Hardened Runtime und Apple-Notarisierung.
-- **Graceful Fallback**: Sind noch keine Secrets konfiguriert, wird die App dennoch gebaut, ad-hoc signiert und als DMG / ZIP bereitgestellt.
-- **Interaktives Setup-Skript**: Mit `./scripts/setup-secrets.sh` kannst du deine Apple Developer Zugangsdaten in Sekundenschnelle via `gh secret set` in GitHub hinterlegen.
+- **Automatischer Trigger**: Erstelle einfach einen Git-Tag (z.B. `v1.0.1`), um automatisch einen Release-Build zu starten.
+- **Apple Developer ID Signierung & Notarisierung**: Unterstützt automatische Signierung mit Hardened Runtime und Apple-Notarisierung via `xcrun notarytool`.
+- **Graceful Fallback**: Sind keine Developer-Secrets hinterlegt, baut die Pipeline die App dennoch ad-hoc signiert und stellt DMG & ZIP als Download bereit.
+
+### 🔑 Benötigte GitHub Secrets
+
+Die Pipeline unterstützt die moderne, von Apple empfohlene **App Store Connect API Key** Authentifizierung (keine 2FA-Hürden in CI/CD, kein persönliches Apple-Passwort nötig):
+
+| Secret | Beschreibung |
+| :--- | :--- |
+| `APPLE_CERTIFICATE_BASE64` | Dein Apple Developer ID Application Zertifikat (`.p12`) als Base64 |
+| `APPLE_CERTIFICATE_PASSWORD` | Das Passwort, mit dem die `.p12`-Datei geschützt ist |
+| `APPLE_API_KEY_BASE64` | Der App Store Connect API Private Key (`AuthKey_XXXXXX.p8`) als Base64 |
+| `APPLE_API_KEY_ID` | Die 10-stellige Schlüssel-ID (z.B. `2X9R427ND4`) |
+| `APPLE_API_ISSUER` | Die Aussteller-ID / Issuer ID (UUID, z.B. `57246542-96fe-1a63-e053-0824d011072a`) |
+
+> [!TIP]
+> **Woher bekommst du den App Store Connect API Key?**
+> 1. Öffne [App Store Connect — Integrationen / API](https://appstoreconnect.apple.com/access/integrations/api).
+> 2. Gehe auf **Benutzer und Zugriff** → Tab **Integrationen** (oder **Schlüssel**) → **App Store Connect-API**.
+> 3. Klicke auf **+** und erstelle einen neuen Schlüssel mit der Rolle *Entwickler* oder *App-Manager*.
+> 4. Lade den privaten Schlüssel (`AuthKey_XXXXXXXXXX.p8`) herunter (Achtung: Apple erlaubt den Download nur ein einziges Mal!).
+> 5. Kopiere die **Schlüssel-ID** (Key ID) und die **Aussteller-ID** (Issuer ID) oben auf der Seite.
+
+*(Optional: Weiterhin wird auch die ältere Legacy-Methode mit `APPLE_ID`, `APPLE_TEAM_ID` und `APPLE_APP_SPECIFIC_PASSWORD` abwärtskompatibel unterstützt).*
+
+### ⚡ Schnelleinrichtung mit Setup-Skript
+
+Du musst die Secrets nicht manuell in GitHub anlegen. Führe einfach im Projektverzeichnis aus:
+
+```bash
+./scripts/setup-secrets.sh
+```
+
+Das interaktive Skript fragt nach den Dateipfaden zu deinem `.p12`-Zertifikat und dem `AuthKey_XXXXXX.p8`, konvertiert sie automatisch nach Base64 und setzt alle Secrets direkt in deinem GitHub-Repository via `gh secret set`.
+
+Danach kannst du ein neues Release veröffentlichen:
+
+```bash
+git tag v1.0.1
+git push origin v1.0.1
+```
 
 ---
 

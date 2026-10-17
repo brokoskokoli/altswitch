@@ -46,15 +46,27 @@ jobs:
         env:
           APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY_BASE64 }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
         run: |
           TAG="${{ steps.version.outputs.TAG }}"
-          
-          if [ -n "${APPLE_CERTIFICATE_BASE64}" ] && [ -n "${APPLE_CERTIFICATE_PASSWORD}" ] && [ -n "${APPLE_ID}" ] && [ -n "${APPLE_TEAM_ID}" ] && [ -n "${APPLE_APP_SPECIFIC_PASSWORD}" ]; then
+
+          HAS_API_KEY_AUTH=false
+          HAS_LEGACY_AUTH=false
+          if [ -n "${APPLE_API_KEY_BASE64}" ] && [ -n "${APPLE_API_KEY_ID}" ] && [ -n "${APPLE_API_ISSUER}" ]; then
+            HAS_API_KEY_AUTH=true
+          fi
+          if [ -n "${APPLE_ID}" ] && [ -n "${APPLE_TEAM_ID}" ] && [ -n "${APPLE_APP_SPECIFIC_PASSWORD}" ]; then
+            HAS_LEGACY_AUTH=true
+          fi
+
+          if [ -n "${APPLE_CERTIFICATE_BASE64}" ] && [ -n "${APPLE_CERTIFICATE_PASSWORD}" ] && { [ "$HAS_API_KEY_AUTH" = true ] || [ "$HAS_LEGACY_AUTH" = true ]; }; then
             echo "=== Apple Developer Credentials detected. Performing Developer ID signing and notarization... ==="
-            
+
             KEYCHAIN_PATH=$RUNNER_TEMP/build.keychain
             KEYCHAIN_PASSWORD=$(openssl rand -base64 24)
             CERTIFICATE_PATH=$RUNNER_TEMP/developer_id.p12
@@ -74,14 +86,14 @@ jobs:
 
             # Identify Developer ID Application certificate identity
             IDENTITY=$(security find-identity -v -p codesigning "${KEYCHAIN_PATH}" | grep "Developer ID Application:" | head -1 | awk -F '"' '{print $2}')
-            
+
             if [ -z "${IDENTITY}" ]; then
               echo "::warning::Developer ID Application certificate not found in keychain. Falling back to ad-hoc signature."
             else
               echo "-> Signing with identity: ${IDENTITY}"
               codesign --force --deep --options runtime --timestamp --sign "${IDENTITY}" --keychain "${KEYCHAIN_PATH}" AltSwitch.app
               codesign --verify --deep --strict AltSwitch.app
-              
+
               # Package DMG
               mkdir -p dmg_folder
               cp -R AltSwitch.app dmg_folder/
@@ -90,12 +102,25 @@ jobs:
               rm -rf dmg_folder
 
               # Notarize DMG
-              echo "-> Submitting DMG for notarization..."
-              xcrun notarytool submit "AltSwitch-${TAG}.dmg" \
-                --apple-id "${APPLE_ID}" \
-                --team-id "${APPLE_TEAM_ID}" \
-                --password "${APPLE_APP_SPECIFIC_PASSWORD}" \
-                --wait
+              if [ "$HAS_API_KEY_AUTH" = true ]; then
+                echo "-> Submitting DMG for notarization using App Store Connect API Key..."
+                KEY_PATH="$RUNNER_TEMP/AuthKey_${APPLE_API_KEY_ID}.p8"
+                echo "${APPLE_API_KEY_BASE64}" | base64 --decode > "${KEY_PATH}"
+                chmod 600 "${KEY_PATH}"
+
+                xcrun notarytool submit "AltSwitch-${TAG}.dmg" \
+                  --key "${KEY_PATH}" \
+                  --key-id "${APPLE_API_KEY_ID}" \
+                  --issuer "${APPLE_API_ISSUER}" \
+                  --wait
+              else
+                echo "-> Submitting DMG for notarization using Apple ID and App-Specific Password..."
+                xcrun notarytool submit "AltSwitch-${TAG}.dmg" \
+                  --apple-id "${APPLE_ID}" \
+                  --team-id "${APPLE_TEAM_ID}" \
+                  --password "${APPLE_APP_SPECIFIC_PASSWORD}" \
+                  --wait
+              fi
 
               echo "-> Stapling notarization ticket to DMG..."
               xcrun stapler staple "AltSwitch-${TAG}.dmg"

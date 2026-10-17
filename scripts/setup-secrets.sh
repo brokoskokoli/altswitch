@@ -14,7 +14,7 @@ echo -e "${BOLD}${CYAN}   AltSwitch — GitHub Secrets Setup for Release   ${NC}
 echo -e "${BOLD}${CYAN}====================================================${NC}"
 echo ""
 echo "Dieses Skript richtet die benötigten GitHub Secrets für die automatische"
-echo "Code-Signierung und Notarisierung durch Apple in deinen GitHub Actions ein."
+echo "Code-Signierung und Apple-Notarisierung in deinen GitHub Actions ein."
 echo ""
 
 # Check for gh CLI
@@ -34,23 +34,34 @@ fi
 echo -e "${GREEN}✓ GitHub CLI ist installiert und angemeldet.${NC}"
 echo ""
 
+# Helper to clean input strings (remove wrapping quotes)
+clean_input() {
+    local val="$1"
+    val="${val#\"}"
+    val="${val%\"}"
+    val="${val#\'}"
+    val="${val%\'}"
+    echo "$val"
+}
+
 # 1. Certificate (.p12 path or base64)
 echo -e "${BOLD}1. Apple Developer ID Application Zertifikat (.p12)${NC}"
-echo "   Woher: Keychain Access (Schlüsselbundverwaltung) ->"
+echo "   Woher: Schlüsselbundverwaltung (Keychain Access) ->"
 echo "   'Developer ID Application: ...' als .p12-Datei exportieren."
-read -r -p "   Pfad zur .p12-Datei oder Base64-String: " CERT_INPUT
+read -r -p "   Pfad zur .p12-Datei oder Base64-String: " RAW_CERT_INPUT
+CERT_INPUT=$(clean_input "$RAW_CERT_INPUT")
 
 CERT_BASE64=""
-if [ -f "${CERT_INPUT/#\~/$HOME}" ]; then
-    EXPANDED_PATH="${CERT_INPUT/#\~/$HOME}"
-    echo "   -> Lese Datei ein und konvertiere nach Base64..."
-    CERT_BASE64=$(base64 -i "${EXPANDED_PATH}" | tr -d '\n')
+EXPANDED_CERT_PATH="${CERT_INPUT/#\~/$HOME}"
+if [ -f "${EXPANDED_CERT_PATH}" ]; then
+    echo "   -> Lese .p12-Datei ein und konvertiere nach Base64..."
+    CERT_BASE64=$(base64 -i "${EXPANDED_CERT_PATH}" | tr -d '\r\n')
 else
-    CERT_BASE64="${CERT_INPUT}"
+    CERT_BASE64="${CERT_INPUT//[[:space:]]/}"
 fi
 
 if [ -z "${CERT_BASE64}" ]; then
-    echo -e "${RED}Fehler: Kein Zertifikat angegeben.${NC}"
+    echo -e "${RED}[Fehler] Kein Zertifikat angegeben.${NC}"
     exit 1
 fi
 
@@ -61,44 +72,132 @@ echo "   Das Passwort, mit dem die .p12-Datei beim Export geschützt wurde."
 read -r -s -p "   Passwort: " CERT_PASSWORD
 echo ""
 
-# 3. Apple ID Email
+# 3. Notarization Method
 echo ""
-echo -e "${BOLD}3. Apple ID (E-Mail)${NC}"
-echo "   Die E-Mail-Adresse deines Apple Developer Accounts."
-read -r -p "   Apple ID: " APPLE_ID
+echo -e "${BOLD}3. Notarisierungs-Methode wählen${NC}"
+echo "   1) App Store Connect API Key (Empfohlen & modern — Key ID, Issuer ID, .p8 AuthKey)"
+echo "   2) Apple ID & App-spezifisches Passwort (Legacy Methode)"
+read -r -p "   Auswahl [1/2, Standard: 1]: " AUTH_CHOICE
+AUTH_CHOICE="${AUTH_CHOICE:-1}"
 
-# 4. Apple Team ID
-echo ""
-echo -e "${BOLD}4. Apple Team ID (10 Zeichen)${NC}"
-echo "   Woher: https://developer.apple.com/account -> 'Membership details' -> Team ID"
-read -r -p "   Team ID: " TEAM_ID
+if [ "${AUTH_CHOICE}" = "1" ]; then
+    echo ""
+    echo -e "${CYAN}--- App Store Connect API Key Konfiguration ---${NC}"
+    echo "Woher bekommst du die Daten?"
+    echo " 1. Gehe zu App Store Connect: https://appstoreconnect.apple.com/access/integrations/api"
+    echo " 2. Unter 'Benutzer und Zugriff' -> Tab 'Integrationen' (oder 'Schlüssel') -> 'App Store Connect-API'."
+    echo " 3. Klicke auf '+' um einen neuen Schlüssel zu erstellen (Rolle: 'Entwickler' oder 'App-Manager')."
+    echo " 4. Lade die Datei 'AuthKey_XXXXXXXXXX.p8' herunter (Achtung: kann nur 1x heruntergeladen werden!)."
+    echo " 5. Kopiere die 'Schlüssel-ID' (Key ID, z.B. 2X9R427ND4) und 'Aussteller-ID' (Issuer ID, UUID)."
+    echo ""
 
-# 5. App-Specific Password
-echo ""
-echo -e "${BOLD}5. App-spezifisches Passwort für Notarisierung${NC}"
-echo "   Woher: https://appleid.apple.com -> 'Anmelden und Sicherheit' ->"
-echo "   'App-spezifische Passwörter' -> Neues Passwort erstellen (z.B. 'AltSwitch Notarization')."
-read -r -s -p "   App-spezifisches Passwort (Format: xxxx-xxxx-xxxx-xxxx): " APP_SPECIFIC_PW
-echo ""
+    # API Key file / base64
+    read -r -p "   Pfad zur AuthKey_XXXXXX.p8 Datei oder Base64-String: " RAW_KEY_INPUT
+    KEY_INPUT=$(clean_input "$RAW_KEY_INPUT")
+    EXPANDED_KEY_PATH="${KEY_INPUT/#\~/$HOME}"
 
-# Confirmation and Setting
-echo ""
-echo -e "${YELLOW}Setze Secrets in GitHub Repository...${NC}"
+    DETECTED_KEY_ID=""
+    API_KEY_BASE64=""
 
-echo -n "${CERT_BASE64}" | gh secret set APPLE_CERTIFICATE_BASE64
-echo -e "${GREEN}✓ APPLE_CERTIFICATE_BASE64 gesetzt.${NC}"
+    if [ -f "${EXPANDED_KEY_PATH}" ]; then
+        echo "   -> Lese .p8-Datei ein und konvertiere nach Base64..."
+        API_KEY_BASE64=$(base64 -i "${EXPANDED_KEY_PATH}" | tr -d '\r\n')
+        FILENAME=$(basename "${EXPANDED_KEY_PATH}")
+        if [[ "${FILENAME}" =~ AuthKey_([A-Za-z0-9]+)\.p8 ]]; then
+            DETECTED_KEY_ID="${BASH_REMATCH[1]}"
+        fi
+    elif [[ "${KEY_INPUT}" == *"BEGIN PRIVATE KEY"* ]]; then
+        API_KEY_BASE64=$(echo "${KEY_INPUT}" | base64 | tr -d '\r\n')
+    else
+        API_KEY_BASE64="${KEY_INPUT//[[:space:]]/}"
+    fi
 
-echo -n "${CERT_PASSWORD}" | gh secret set APPLE_CERTIFICATE_PASSWORD
-echo -e "${GREEN}✓ APPLE_CERTIFICATE_PASSWORD gesetzt.${NC}"
+    if [ -z "${API_KEY_BASE64}" ]; then
+        echo -e "${RED}[Fehler] Kein API Key angegeben.${NC}"
+        exit 1
+    fi
 
-echo -n "${APPLE_ID}" | gh secret set APPLE_ID
-echo -e "${GREEN}✓ APPLE_ID gesetzt.${NC}"
+    # Key ID
+    if [ -n "${DETECTED_KEY_ID}" ]; then
+        read -r -p "   Key ID (10 Zeichen) [Erkannt: ${DETECTED_KEY_ID}]: " KEY_ID
+        KEY_ID="${KEY_ID:-$DETECTED_KEY_ID}"
+    else
+        read -r -p "   Key ID (10 Zeichen, z.B. 2X9R427ND4): " KEY_ID
+    fi
+    KEY_ID=$(clean_input "$KEY_ID")
 
-echo -n "${TEAM_ID}" | gh secret set APPLE_TEAM_ID
-echo -e "${GREEN}✓ APPLE_TEAM_ID gesetzt.${NC}"
+    if [ -z "${KEY_ID}" ]; then
+        echo -e "${RED}[Fehler] Keine Key ID angegeben.${NC}"
+        exit 1
+    fi
 
-echo -n "${APP_SPECIFIC_PW}" | gh secret set APPLE_APP_SPECIFIC_PASSWORD
-echo -e "${GREEN}✓ APPLE_APP_SPECIFIC_PASSWORD gesetzt.${NC}"
+    # Issuer ID
+    read -r -p "   Issuer ID (UUID, z.B. 57246542-96fe-1a63-e053-0824d011072a): " ISSUER_ID
+    ISSUER_ID=$(clean_input "$ISSUER_ID")
+
+    if [ -z "${ISSUER_ID}" ]; then
+        echo -e "${RED}[Fehler] Keine Issuer ID angegeben.${NC}"
+        exit 1
+    fi
+
+    # Setting Secrets
+    echo ""
+    echo -e "${YELLOW}Setze Secrets im GitHub Repository...${NC}"
+
+    echo -n "${CERT_BASE64}" | gh secret set APPLE_CERTIFICATE_BASE64
+    echo -e "${GREEN}✓ APPLE_CERTIFICATE_BASE64 gesetzt.${NC}"
+
+    echo -n "${CERT_PASSWORD}" | gh secret set APPLE_CERTIFICATE_PASSWORD
+    echo -e "${GREEN}✓ APPLE_CERTIFICATE_PASSWORD gesetzt.${NC}"
+
+    echo -n "${API_KEY_BASE64}" | gh secret set APPLE_API_KEY_BASE64
+    echo -e "${GREEN}✓ APPLE_API_KEY_BASE64 gesetzt.${NC}"
+
+    echo -n "${KEY_ID}" | gh secret set APPLE_API_KEY_ID
+    echo -e "${GREEN}✓ APPLE_API_KEY_ID gesetzt.${NC}"
+
+    echo -n "${ISSUER_ID}" | gh secret set APPLE_API_ISSUER
+    echo -e "${GREEN}✓ APPLE_API_ISSUER gesetzt.${NC}"
+
+else
+    echo ""
+    echo -e "${CYAN}--- Apple ID & App-spezifisches Passwort (Legacy) ---${NC}"
+
+    # Apple ID Email
+    read -r -p "   Apple ID (E-Mail): " RAW_APPLE_ID
+    APPLE_ID=$(clean_input "$RAW_APPLE_ID")
+
+    # Team ID
+    echo "   Woher: https://developer.apple.com/account -> 'Membership details' -> Team ID"
+    read -r -p "   Apple Team ID (10 Zeichen): " RAW_TEAM_ID
+    TEAM_ID=$(clean_input "$RAW_TEAM_ID")
+
+    # App-Specific Password
+    echo "   Woher: https://appleid.apple.com -> 'Anmelden und Sicherheit' ->"
+    echo "   'App-spezifische Passwörter' -> Neues Passwort erstellen."
+    read -r -s -p "   App-spezifisches Passwort (Format: xxxx-xxxx-xxxx-xxxx): " RAW_APP_SPECIFIC_PW
+    echo ""
+    APP_SPECIFIC_PW=$(clean_input "$RAW_APP_SPECIFIC_PW")
+
+    # Setting Secrets
+    echo ""
+    echo -e "${YELLOW}Setze Secrets im GitHub Repository...${NC}"
+
+    echo -n "${CERT_BASE64}" | gh secret set APPLE_CERTIFICATE_BASE64
+    echo -e "${GREEN}✓ APPLE_CERTIFICATE_BASE64 gesetzt.${NC}"
+
+    echo -n "${CERT_PASSWORD}" | gh secret set APPLE_CERTIFICATE_PASSWORD
+    echo -e "${GREEN}✓ APPLE_CERTIFICATE_PASSWORD gesetzt.${NC}"
+
+    echo -n "${APPLE_ID}" | gh secret set APPLE_ID
+    echo -e "${GREEN}✓ APPLE_ID gesetzt.${NC}"
+
+    echo -n "${TEAM_ID}" | gh secret set APPLE_TEAM_ID
+    echo -e "${GREEN}✓ APPLE_TEAM_ID gesetzt.${NC}"
+
+    echo -n "${APP_SPECIFIC_PW}" | gh secret set APPLE_APP_SPECIFIC_PASSWORD
+    echo -e "${GREEN}✓ APPLE_APP_SPECIFIC_PASSWORD gesetzt.${NC}"
+fi
 
 echo ""
 echo -e "${BOLD}${GREEN}====================================================${NC}"
@@ -109,6 +208,6 @@ echo "Aktuelle Secrets in diesem Repository:"
 gh secret list
 echo ""
 echo "Wenn du einen neuen Release erstellen möchtest:"
-echo "  git tag v1.0.0"
-echo "  git push origin v1.0.0"
+echo "  git tag v1.0.1"
+echo "  git push origin v1.0.1"
 echo "Die GitHub Action baut, signiert und notarisiert das Release automatisch!"
