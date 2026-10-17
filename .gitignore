@@ -1,0 +1,29 @@
+# macOS System Files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+
+# Build artifacts & SwiftPM
+.build/
+/.build
+/Packages
+xcuserdata/
+DerivedData/
+.swiftpm/
+.netrc
+
+# Application bundles & Distribution artifacts
+AltSwitch.app
+main
+*.dmg
+*.zip
+*.tar.gz
+*.pkg
+
+# System generated, scratch & caches
+.system_generated
+scratch/
+/tmp
+ModuleCache

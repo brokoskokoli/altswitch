@@ -1,0 +1,141 @@
+name: Release AltSwitch
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag (e.g. v1.0.0)'
+        required: false
+        default: 'v1.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build & Release AltSwitch
+    runs-on: macos-14
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Determine Version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag_name }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "TAG=${TAG}" >> "$GITHUB_OUTPUT"
+          VERSION="${TAG#v}"
+          echo "VERSION=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Building version ${VERSION} for release tag ${TAG}"
+
+      - name: Build Application Bundle
+        run: |
+          chmod +x build.sh
+          ./build.sh
+
+      - name: Sign & Notarize (with Graceful Fallback)
+        id: codesign
+        env:
+          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+        run: |
+          TAG="${{ steps.version.outputs.TAG }}"
+          
+          if [ -n "${APPLE_CERTIFICATE_BASE64}" ] && [ -n "${APPLE_CERTIFICATE_PASSWORD}" ] && [ -n "${APPLE_ID}" ] && [ -n "${APPLE_TEAM_ID}" ] && [ -n "${APPLE_APP_SPECIFIC_PASSWORD}" ]; then
+            echo "=== Apple Developer Credentials detected. Performing Developer ID signing and notarization... ==="
+            
+            KEYCHAIN_PATH=$RUNNER_TEMP/build.keychain
+            KEYCHAIN_PASSWORD=$(openssl rand -base64 24)
+            CERTIFICATE_PATH=$RUNNER_TEMP/developer_id.p12
+
+            # Decode certificate
+            echo "${APPLE_CERTIFICATE_BASE64}" | base64 --decode > "${CERTIFICATE_PATH}"
+
+            # Create and configure temporary keychain
+            security create-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
+            security set-keychain-settings -lut 21600 "${KEYCHAIN_PATH}"
+            security unlock-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
+
+            # Import certificate into keychain
+            security import "${CERTIFICATE_PATH}" -P "${APPLE_CERTIFICATE_PASSWORD}" -A -t cert -f pkcs12 -k "${KEYCHAIN_PATH}"
+            security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
+            security list-keychains -d user -s "${KEYCHAIN_PATH}" $(security list-keychains -d user | tr -d '"')
+
+            # Identify Developer ID Application certificate identity
+            IDENTITY=$(security find-identity -v -p codesigning "${KEYCHAIN_PATH}" | grep "Developer ID Application:" | head -1 | awk -F '"' '{print $2}')
+            
+            if [ -z "${IDENTITY}" ]; then
+              echo "::warning::Developer ID Application certificate not found in keychain. Falling back to ad-hoc signature."
+            else
+              echo "-> Signing with identity: ${IDENTITY}"
+              codesign --force --deep --options runtime --timestamp --sign "${IDENTITY}" --keychain "${KEYCHAIN_PATH}" AltSwitch.app
+              codesign --verify --deep --strict AltSwitch.app
+              
+              # Package DMG
+              mkdir -p dmg_folder
+              cp -R AltSwitch.app dmg_folder/
+              ln -s /Applications dmg_folder/Applications
+              hdiutil create -volname "AltSwitch" -srcfolder dmg_folder -ov -format UDZO "AltSwitch-${TAG}.dmg"
+              rm -rf dmg_folder
+
+              # Notarize DMG
+              echo "-> Submitting DMG for notarization..."
+              xcrun notarytool submit "AltSwitch-${TAG}.dmg" \
+                --apple-id "${APPLE_ID}" \
+                --team-id "${APPLE_TEAM_ID}" \
+                --password "${APPLE_APP_SPECIFIC_PASSWORD}" \
+                --wait
+
+              echo "-> Stapling notarization ticket to DMG..."
+              xcrun stapler staple "AltSwitch-${TAG}.dmg"
+
+              # Staple App bundle and create ZIP
+              echo "-> Stapling notarization ticket to App bundle..."
+              xcrun stapler staple AltSwitch.app || true
+              ditto -c -k --keepParent AltSwitch.app "AltSwitch-${TAG}.zip"
+
+              echo "SIGNED=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          else
+            echo "::notice::Apple Developer Secrets not configured or incomplete. Packaging release with ad-hoc signature."
+          fi
+
+          # Fallback packaging (Ad-hoc signature)
+          mkdir -p dmg_folder
+          cp -R AltSwitch.app dmg_folder/
+          ln -s /Applications dmg_folder/Applications
+          hdiutil create -volname "AltSwitch" -srcfolder dmg_folder -ov -format UDZO "AltSwitch-${TAG}.dmg"
+          rm -rf dmg_folder
+          ditto -c -k --keepParent AltSwitch.app "AltSwitch-${TAG}.zip"
+          echo "SIGNED=false" >> "$GITHUB_OUTPUT"
+
+      - name: Generate Checksums
+        run: |
+          TAG="${{ steps.version.outputs.TAG }}"
+          shasum -a 256 "AltSwitch-${TAG}.dmg" "AltSwitch-${TAG}.zip" > checksums.txt
+          cat checksums.txt
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.TAG }}
+          name: AltSwitch ${{ steps.version.outputs.TAG }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            AltSwitch-${{ steps.version.outputs.TAG }}.dmg
+            AltSwitch-${{ steps.version.outputs.TAG }}.zip
+            checksums.txt
