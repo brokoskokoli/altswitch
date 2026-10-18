@@ -38,7 +38,8 @@ public class StatusBarController: NSObject, NSMenuDelegate {
         statusItem.button?.toolTip = L("menu.tooltip")
 
         // 1. App Header
-        let headerItem = NSMenuItem(title: "AltSwitch v1.0", action: nil, keyEquivalent: "")
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
+        let headerItem = NSMenuItem(title: version.isEmpty ? "AltSwitch" : "AltSwitch \(version)", action: nil, keyEquivalent: "")
         headerItem.isEnabled = false
         menu.addItem(headerItem)
 
