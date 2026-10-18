@@ -6,6 +6,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-10-19
+
 ### Fixed
 - **Window order:** windows are listed by when you last used them, like Alt-Tab on Windows.
   Before, all windows of an app came first as a group as soon as you switched to that app,
@@ -58,7 +60,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 First version (unsigned, withdrawn).
 
-[Unreleased]: https://github.com/brokoskokoli/altswitch/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/brokoskokoli/altswitch/compare/v1.1.2...HEAD
+[1.1.2]: https://github.com/brokoskokoli/altswitch/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/brokoskokoli/altswitch/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/brokoskokoli/altswitch/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/brokoskokoli/altswitch/compare/v1.0.1...v1.0.2
