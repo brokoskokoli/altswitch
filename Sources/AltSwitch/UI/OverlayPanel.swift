@@ -150,6 +150,20 @@ public class OverlayPanel: NSPanel {
         self.orderFrontRegardless()
     }
 
+    /// Renders the overlay once, invisible and off screen: the first real shortcut press then skips
+    /// SwiftUI's cold start (~200 ms).
+    public func prewarm() {
+        viewModel.windows = WindowManager.shared.getOpenWindows()
+        viewModel.selectedIndex = 0
+        alphaValue = 0
+        setFrame(NSRect(x: -10000, y: -10000, width: 750, height: 330), display: false)
+        orderFrontRegardless()
+        contentView?.layoutSubtreeIfNeeded()
+        display()
+        orderOut(nil)
+        viewModel.windows = []
+    }
+
     public func updateThumbnail(for windowId: CGWindowID, image: CGImage) {
         viewModel.updateThumbnail(for: windowId, image: image)
     }

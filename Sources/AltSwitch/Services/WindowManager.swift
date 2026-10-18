@@ -46,8 +46,39 @@ public class WindowManager {
             forName: NSWorkspace.didActivateApplicationNotification,
             object: nil,
             queue: .main
-        ) { [weak self] _ in
+        ) { [weak self] note in
             self?.refreshThumbnailCacheInBackground()
+            if let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication {
+                self?.warmUp([app])
+            }
+        }
+    }
+
+    /// The first Accessibility call to an app is slow (~150 ms for ten apps here). Doing it in the
+    /// background keeps that cost out of the first shortcut press.
+    public func warmUp(_ apps: [NSRunningApplication]? = nil) {
+        let currentPID = NSRunningApplication.current.processIdentifier
+        let targets = (apps ?? NSWorkspace.shared.runningApplications).filter {
+            $0.activationPolicy == .regular && $0.processIdentifier != currentPID
+        }
+        DispatchQueue.global(qos: .utility).async {
+            for app in targets {
+                _ = app.icon
+                let appElement = AXUIElementCreateApplication(app.processIdentifier)
+                AXUIElementSetMessagingTimeout(appElement, 0.2)
+                var windowListValue: AnyObject?
+                AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &windowListValue)
+            }
+        }
+    }
+
+    /// Cached images for the given windows, so cards show a preview right away instead of a placeholder.
+    public func cachedThumbnails(for windows: [WindowItem]) -> [WindowItem] {
+        let cache = cacheQueue.sync { thumbnailCache }
+        return windows.map { item in
+            var item = item
+            item.thumbnail = item.thumbnail ?? cache[item.id]
+            return item
         }
     }
 
@@ -240,24 +271,12 @@ public class WindowManager {
         return results.filter { seen.insert($0.id).inserted }
     }
 
-    /// Loads window thumbnails asynchronously without blocking the main run loop.
-    /// Minimized windows get their cached image from before they were minimized.
+    /// Loads fresh window thumbnails asynchronously without blocking the main run loop. Minimized
+    /// windows cannot be captured; they keep the cached image from cachedThumbnails(for:).
     public func loadThumbnailsAsync(for windows: [WindowItem], onThumbnail: @escaping (CGWindowID, CGImage) -> Void) {
         guard PermissionsManager.shared.isScreenRecordingGranted,
               let createImage = dynamicCGWindowListCreateImage else {
             return
-        }
-
-        // Minimized windows cannot be captured: show their image from before minimizing
-        cacheQueue.async { [weak self] in
-            guard let self = self else { return }
-            for item in windows where item.isMinimized {
-                if let cached = self.thumbnailCache[item.id] {
-                    DispatchQueue.main.async {
-                        onThumbnail(item.id, cached)
-                    }
-                }
-            }
         }
 
         DispatchQueue.global(qos: .userInteractive).async { [weak self] in

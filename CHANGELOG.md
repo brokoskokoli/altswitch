@@ -6,6 +6,13 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- **Faster:** the switcher appears about four times faster on the first press (around 50 ms
+  instead of 300 ms here). AltSwitch prepares the overlay at launch, contacts apps in the
+  background and is exempt from App Nap, so it also stays quick after a long pause.
+- **Previews at once:** cards show the last known image of each window immediately instead of
+  “Loading…”, then refresh it.
+
 ## [1.1.0] - 2026-10-18
 
 ### Added

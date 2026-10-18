@@ -5,6 +5,8 @@ import Cocoa
 public class AppDelegate: NSObject, NSApplicationDelegate, HotkeyManagerDelegate {
     private var statusBarController: StatusBarController?
     private var overlayPanel: OverlayPanel?
+    /// Keeps App Nap away: a napping menu bar app reacts late to the shortcut and pages out the overlay.
+    private var noNapActivity: NSObjectProtocol?
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
         // Only one instance: a second launch tells the user and quits
@@ -18,6 +20,11 @@ public class AppDelegate: NSObject, NSApplicationDelegate, HotkeyManagerDelegate
         NSApplication.shared.setActivationPolicy(.accessory)
 
         AutostartManager.shared.enableOnFirstLaunchIfInstalled()
+
+        noNapActivity = ProcessInfo.processInfo.beginActivity(
+            options: [.userInitiatedAllowingIdleSystemSleep],
+            reason: "AltSwitch must react to the shortcut immediately"
+        )
 
         // Initialize Overlay Panel
         let panel = OverlayPanel()
@@ -48,6 +55,10 @@ public class AppDelegate: NSObject, NSApplicationDelegate, HotkeyManagerDelegate
 
         // Keep recent window images so minimized windows still get a preview
         WindowManager.shared.startThumbnailCaching()
+
+        // Pay the first-use costs now instead of on the first shortcut press
+        WindowManager.shared.warmUp()
+        panel.prewarm()
     }
 
     public func applicationWillTerminate(_ notification: Notification) {
@@ -80,7 +91,7 @@ public class AppDelegate: NSObject, NSApplicationDelegate, HotkeyManagerDelegate
     // MARK: - HotkeyManagerDelegate
 
     public func hotkeyTriggered(forward: Bool) {
-        let windows = WindowManager.shared.getOpenWindows()
+        let windows = WindowManager.shared.cachedThumbnails(for: WindowManager.shared.getOpenWindows())
         guard !windows.isEmpty else {
             HotkeyManager.shared.isOverlayActive = false
             return
