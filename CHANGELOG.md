@@ -3,7 +3,7 @@
 Alle nennenswerten Änderungen an AltSwitch. Format: [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionen nach [Semantic Versioning](https://semver.org/lang/de/).
 
-## [Unreleased]
+## [1.0.2] - 2026-10-18
 
 ### Hinzugefügt
 - Minimierte Fenster zeigen eine Vorschau: das letzte Bild, bevor sie minimiert wurden.
@@ -25,4 +25,5 @@ Versionen nach [Semantic Versioning](https://semver.org/lang/de/).
 
 Erste Version (nicht signiert, zurückgezogen).
 
+[1.0.2]: https://github.com/brokoskokoli/altswitch/releases/tag/v1.0.2
 [1.0.1]: https://github.com/brokoskokoli/altswitch/releases/tag/v1.0.1
