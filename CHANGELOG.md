@@ -6,6 +6,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-10-19
+
 ### Changed
 - **Faster:** the switcher appears about four times faster on the first press (around 50 ms
   instead of 300 ms here). AltSwitch prepares the overlay at launch, contacts apps in the
@@ -51,7 +53,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 First version (unsigned, withdrawn).
 
-[Unreleased]: https://github.com/brokoskokoli/altswitch/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/brokoskokoli/altswitch/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/brokoskokoli/altswitch/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/brokoskokoli/altswitch/compare/v1.0.2...v1.1.0
 [1.0.2]: https://github.com/brokoskokoli/altswitch/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/brokoskokoli/altswitch/releases/tag/v1.0.1
