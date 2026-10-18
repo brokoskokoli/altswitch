@@ -3,6 +3,17 @@
 Alle nennenswerten Änderungen an AltSwitch. Format: [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionen nach [Semantic Versioning](https://semver.org/lang/de/).
 
+## [Unreleased]
+
+### Hinzugefügt
+- Minimierte Fenster zeigen eine Vorschau: das letzte Bild, bevor sie minimiert wurden.
+- Beim ersten Start aus dem Programme-Ordner schaltet sich der Autostart ein. Abschalten geht weiter im Menü.
+- Es läuft immer nur eine Instanz. Ein zweiter Start meldet „AltSwitch läuft bereits“ und beendet sich.
+
+### Behoben
+- Rasteransicht: ↓ springt nicht mehr in die erste Reihe, wenn die letzte Reihe kürzer ist.
+- Rasteransicht: Scrollen unter dem ruhenden Mauszeiger verstellt die Auswahl nicht mehr.
+
 ## [1.0.1] - 2026-10-18
 
 ### Geändert

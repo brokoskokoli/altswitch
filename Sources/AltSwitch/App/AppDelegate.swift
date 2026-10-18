@@ -5,8 +5,17 @@ public class AppDelegate: NSObject, NSApplicationDelegate, HotkeyManagerDelegate
     private var overlayPanel: OverlayPanel?
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
+        // Only one instance: a second launch tells the user and quits
+        if isAnotherInstanceRunning() {
+            showAlreadyRunningAlert()
+            NSApplication.shared.terminate(nil)
+            return
+        }
+
         // Run as menu bar accessory (LSUIElement)
         NSApplication.shared.setActivationPolicy(.accessory)
+
+        AutostartManager.shared.enableOnFirstLaunchIfInstalled()
 
         // Initialize Overlay Panel
         let panel = OverlayPanel()
@@ -34,10 +43,36 @@ public class AppDelegate: NSObject, NSApplicationDelegate, HotkeyManagerDelegate
 
         // Start global hotkey tap
         HotkeyManager.shared.start()
+
+        // Keep recent window images so minimized windows still get a preview
+        WindowManager.shared.startThumbnailCaching()
     }
 
     public func applicationWillTerminate(_ notification: Notification) {
         HotkeyManager.shared.stop()
+    }
+
+    // MARK: - Single Instance
+
+    private func isAnotherInstanceRunning() -> Bool {
+        let current = NSRunningApplication.current
+        // Bundle ID covers every copy of the app; the name catches builds launched without a bundle
+        let bundleID = Bundle.main.bundleIdentifier ?? "com.stefanrichter.altswitch"
+        return NSWorkspace.shared.runningApplications.contains { app in
+            app.processIdentifier != current.processIdentifier &&
+                !app.isTerminated &&
+                (app.bundleIdentifier == bundleID || app.executableURL?.lastPathComponent == "AltSwitch")
+        }
+    }
+
+    private func showAlreadyRunningAlert() {
+        NSApplication.shared.activate(ignoringOtherApps: true)
+        let alert = NSAlert()
+        alert.messageText = "AltSwitch läuft bereits"
+        alert.informativeText = "Es kann nur eine Instanz von AltSwitch gleichzeitig laufen. Die laufende Instanz findest du in der Menüleiste."
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
 
     // MARK: - HotkeyManagerDelegate

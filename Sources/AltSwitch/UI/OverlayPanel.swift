@@ -60,6 +60,8 @@ public class OverlayPanel: NSPanel {
         viewModel.windows = windows
         viewModel.selectedIndex = (initialIndex >= 0 && initialIndex < windows.count) ? initialIndex : 0
         viewModel.isScreenRecordingGranted = PermissionsManager.shared.isScreenRecordingGranted
+        // A pointer that happens to rest where the panel appears must not pick a card
+        viewModel.noteKeyboardNavigation()
 
         // Center on the active display:
         // 1. Try finding screen of the active (first) window
@@ -156,14 +158,17 @@ public class OverlayPanel: NSPanel {
     }
 
     public func cycleNext() {
+        viewModel.noteKeyboardNavigation()
         viewModel.cycleNext()
     }
 
     public func cyclePrevious() {
+        viewModel.noteKeyboardNavigation()
         viewModel.cyclePrevious()
     }
 
     public func navigate(direction: NavigationDirection) {
+        viewModel.noteKeyboardNavigation()
         viewModel.navigate(direction: direction)
     }
 

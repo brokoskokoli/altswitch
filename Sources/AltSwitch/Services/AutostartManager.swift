@@ -14,7 +14,24 @@ public class AutostartManager {
         return false
     }
 
-    public func setAutostart(enabled: Bool) -> Bool {
+    private let initializedKey = "AltSwitch_AutostartInitialized"
+
+    /// On the first launch of an installed copy, autostart is switched on once. Later the user's
+    /// choice (menu or setup assistant) is never overridden. Builds outside an Applications
+    /// folder are left alone so a development copy does not become the login item.
+    public func enableOnFirstLaunchIfInstalled() {
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: initializedKey) else { return }
+        let appPath = Bundle.main.bundleURL.resolvingSymlinksInPath().path
+        let applicationFolders = FileManager.default
+            .urls(for: .applicationDirectory, in: [.localDomainMask, .userDomainMask])
+            .map { $0.resolvingSymlinksInPath().path + "/" }
+        guard applicationFolders.contains(where: { appPath.hasPrefix($0) }) else { return }
+        defaults.set(true, forKey: initializedKey)
+        _ = setAutostart(enabled: true, openSettingsIfApprovalNeeded: false)
+    }
+
+    public func setAutostart(enabled: Bool, openSettingsIfApprovalNeeded: Bool = true) -> Bool {
         if #available(macOS 13.0, *) {
             do {
                 if enabled {
@@ -27,13 +44,13 @@ public class AutostartManager {
                     }
                 }
 
-                if SMAppService.mainApp.status == .requiresApproval {
+                if openSettingsIfApprovalNeeded && SMAppService.mainApp.status == .requiresApproval {
                     SMAppService.openSystemSettingsLoginItems()
                 }
                 return true
             } catch {
                 NSLog("AltSwitch: AutostartManager error: %@", error.localizedDescription)
-                if SMAppService.mainApp.status == .requiresApproval {
+                if openSettingsIfApprovalNeeded && SMAppService.mainApp.status == .requiresApproval {
                     SMAppService.openSystemSettingsLoginItems()
                 }
                 return false

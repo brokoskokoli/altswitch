@@ -59,14 +59,37 @@ public class OverlayViewModel: ObservableObject {
                 }
             case .down:
                 let col = selectedIndex % cols
+                let row = selectedIndex / cols
+                let lastRow = (windows.count - 1) / cols
                 if selectedIndex + cols < windows.count {
                     selectedIndex += cols
+                } else if row < lastRow {
+                    // Last row is shorter: no card directly below, take its last card
+                    selectedIndex = windows.count - 1
                 } else {
                     // Wrap to top-most item in the same column
                     selectedIndex = col
                 }
             }
         }
+    }
+
+    /// Mouse position at the last keyboard navigation. Scrolling the grid moves cards under a
+    /// resting pointer and fires onHover; only a real mouse movement may change the selection.
+    private var pointerAtKeyboardNavigation: NSPoint?
+
+    public func noteKeyboardNavigation() {
+        pointerAtKeyboardNavigation = NSEvent.mouseLocation
+    }
+
+    public func hover(at index: Int) {
+        let pointer = NSEvent.mouseLocation
+        if let resting = pointerAtKeyboardNavigation,
+           abs(resting.x - pointer.x) < 2, abs(resting.y - pointer.y) < 2 {
+            return
+        }
+        pointerAtKeyboardNavigation = nil
+        selectedIndex = index
     }
 
     public func selectCurrent() {
@@ -175,7 +198,7 @@ struct OverlayView: View {
                                             viewModel.selectWindow(at: index)
                                         },
                                         onHover: {
-                                            viewModel.selectedIndex = index
+                                            viewModel.hover(at: index)
                                         }
                                     )
                                     .id(index)
@@ -203,7 +226,7 @@ struct OverlayView: View {
                                             viewModel.selectWindow(at: index)
                                         },
                                         onHover: {
-                                            viewModel.selectedIndex = index
+                                            viewModel.hover(at: index)
                                         }
                                     )
                                     .id(index)
