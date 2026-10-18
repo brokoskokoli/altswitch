@@ -1,0 +1,6 @@
+/* SPDX-License-Identifier: MIT */
+/* Permission texts macOS shows for AltSwitch (pt-BR) */
+
+"NSAccessibilityUsageDescription" = "O AltSwitch precisa de acesso à Acessibilidade para focar janelas e capturar atalhos de teclado globais.";
+"NSAppleEventsUsageDescription" = "O AltSwitch precisa de acesso à Acessibilidade para focar janelas e capturar atalhos de teclado globais.";
+"NSScreenCaptureUsageDescription" = "O AltSwitch precisa de acesso à Gravação de Tela para mostrar pré-visualizações ao vivo das janelas no alternador.";

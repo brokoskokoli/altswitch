@@ -42,6 +42,7 @@ window you wanted.
 - **Keyboard or mouse** – `⇧-Tab` or a tap on Shift goes back, `Esc` cancels, a single click
   activates a card.
 - **Minimized windows** included, marked with a badge, restored when you pick them.
+- **25 languages** – follows the macOS language or the one you pick in the menu (Language).
 - **Menu bar app** – no Dock icon, a setup assistant for the macOS permissions, optional start at
   login.
 - **Native and light** – Swift, AppKit and SwiftUI, no Electron.

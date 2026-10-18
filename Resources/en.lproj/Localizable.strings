@@ -1,0 +1,140 @@
+/* SPDX-License-Identifier: MIT */
+/* AltSwitch UI texts, development language. Every other .lproj has exactly these keys. */
+
+/* Tooltip of the menu bar icon */
+"menu.tooltip" = "AltSwitch — Windows-style window switcher";
+
+/* Menu item */
+"menu.openSetup" = "Open Setup Assistant…";
+
+/* Menu item, permission granted */
+"menu.accessibilityEnabled" = "✓ Accessibility enabled";
+
+/* Menu item, permission missing */
+"menu.allowAccessibility" = "⚠️ Allow Accessibility…";
+
+/* Menu item, permission granted */
+"menu.screenRecordingEnabled" = "✓ Screen Recording enabled";
+
+/* Menu item, permission missing */
+"menu.allowScreenRecording" = "⚠️ Allow Screen Recording…";
+
+/* Section header in the menu and label in the setup assistant */
+"settings.shortcut" = "Keyboard shortcut:";
+
+/* Section header in the menu */
+"menu.layout" = "Layout:";
+
+/* Menu item (checkbox) */
+"menu.startAtLogin" = "Start at Login";
+
+/* Language submenu; other languages get " / Language" appended */
+"menu.language" = "Language";
+
+/* Language submenu: follow the macOS language */
+"menu.systemLanguage" = "System Language";
+
+/* Menu item */
+"menu.quit" = "Quit AltSwitch";
+
+/* Shortcut choice */
+"shortcut.optionTab" = "Option + Tab (⌥-Tab)";
+
+/* Shortcut choice */
+"shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
+
+/* Layout choice: carousel */
+"layout.compact" = "Compact (Focus)";
+
+/* Layout choice: grid of all windows */
+"layout.grid" = "All Windows (Grid Overview)";
+
+/* Alert at a second launch */
+"alert.alreadyRunning.title" = "AltSwitch is already running";
+
+/* Alert at a second launch */
+"alert.alreadyRunning.message" = "Only one instance of AltSwitch can run at a time. You’ll find the running instance in the menu bar.";
+
+/* Alert button */
+"alert.ok" = "OK";
+
+/* Switcher without windows */
+"overlay.noWindows" = "No open windows found";
+
+/* Badge on a minimized window (short) */
+"overlay.minimized" = "Minimized";
+
+/* Footer hint next to the Tab symbol (short) */
+"overlay.hint.next" = "Next";
+
+/* Footer hint next to the Shift-Tab symbol (short) */
+"overlay.hint.back" = "Back";
+
+/* Footer hint next to the arrow keys (short) */
+"overlay.hint.navigate" = "Navigate";
+
+/* Footer hint next to Esc (short) */
+"overlay.hint.cancel" = "Cancel";
+
+/* Footer hint: releasing the modifier key switches */
+"overlay.hint.release" = "Release the key to switch";
+
+/* Card without preview because the permission is missing */
+"card.screenRecordingRequired" = "Screen Recording required";
+
+/* Card while the preview loads */
+"card.loading" = "Loading…";
+
+/* Title bar of the setup assistant */
+"setup.windowTitle" = "Welcome to AltSwitch — Initial Setup";
+
+/* Setup assistant headline */
+"setup.welcome" = "Welcome to AltSwitch";
+
+/* Setup assistant subtitle */
+"setup.subtitle" = "Initial setup and permissions for the Windows-style window switcher.";
+
+/* Step heading: %lld = number, %@ = step title */
+"setup.step" = "Step %lld: %@";
+
+/* Step title, name of the macOS privacy setting */
+"setup.accessibility.title" = "Accessibility";
+
+/* Step description */
+"setup.accessibility.description" = "Needed to capture ⌥-Tab / ⌘-Tab system-wide and to bring the selected window to the front.";
+
+/* Step title, name of the macOS privacy setting */
+"setup.screenRecording.title" = "Screen Recording";
+
+/* Step description */
+"setup.screenRecording.description" = "Needed for the live screenshots / thumbnails of open windows.";
+
+/* Status badge, permission granted */
+"setup.enabled" = "Enabled";
+
+/* Status badge, permission missing */
+"setup.required" = "Required";
+
+/* Button that opens System Settings */
+"setup.openSettings" = "Open System Settings";
+
+/* Step title */
+"setup.quickSettings" = "Quick Settings";
+
+/* Label above the layout choice */
+"setup.layout" = "Layout mode:";
+
+/* Shortcut choice in the setup assistant */
+"setup.shortcut.optionTab" = "Option + Tab (⌥-Tab, Windows-style)";
+
+/* Checkbox */
+"setup.autostart" = "Start automatically at login";
+
+/* Checkbox explanation */
+"setup.autostart.detail" = "AltSwitch runs unobtrusively in the menu bar.";
+
+/* Button: close the assistant without finishing */
+"setup.later" = "Set Up Later";
+
+/* Default button */
+"setup.finish" = "Finish & Get Started";

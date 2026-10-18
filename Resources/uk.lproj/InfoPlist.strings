@@ -1,0 +1,6 @@
+/* SPDX-License-Identifier: MIT */
+/* Permission texts macOS shows for AltSwitch (uk) */
+
+"NSAccessibilityUsageDescription" = "AltSwitch потребує доступу до Доступності, щоб активувати вікна та перехоплювати глобальні клавіатурні скорочення.";
+"NSAppleEventsUsageDescription" = "AltSwitch потребує доступу до Доступності, щоб активувати вікна та перехоплювати глобальні клавіатурні скорочення.";
+"NSScreenCaptureUsageDescription" = "AltSwitch потребує доступу до записування екрана, щоб показувати живі попередні перегляди вікон у перемикачі.";

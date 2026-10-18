@@ -6,6 +6,13 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **25 languages:** English, German, French, Spanish, Italian, Portuguese (Brazil and Portugal),
+  Dutch, Polish, Czech, Slovak, Swedish, Danish, Norwegian Bokmål, Finnish, Hungarian, Romanian,
+  Greek, Turkish, Russian, Ukrainian, Japanese, Korean and Chinese (Simplified and Traditional).
+- **Language setting:** the menu bar menu has a “Language” submenu. “System Language” (the
+  default) follows macOS, or pick any language; the switch takes effect at once, without a restart.
+
 ### Fixed
 - **Highlight:** every selected card is highlighted while you step through with Tab. Before, some
   cards stayed without the blue frame although the counter moved on. Several minimized windows of

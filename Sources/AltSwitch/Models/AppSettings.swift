@@ -10,9 +10,9 @@ public enum ShortcutMode: String, CaseIterable {
     public var title: String {
         switch self {
         case .optionTab:
-            return "Option + Tab (⌥-Tab)"
+            return L("shortcut.optionTab")
         case .cmdTab:
-            return "Command + Tab (⌘-Tab)"
+            return L("shortcut.cmdTab")
         }
     }
 }
@@ -24,9 +24,9 @@ public enum SwitcherLayout: String, CaseIterable {
     public var title: String {
         switch self {
         case .compact:
-            return "Kompakt (Fokus)"
+            return L("layout.compact")
         case .grid:
-            return "Alle Fenster (Raster-Übersicht)"
+            return L("layout.grid")
         }
     }
 }
@@ -38,6 +38,7 @@ public class AppSettings: ObservableObject {
     private let shortcutKey = "AltSwitch_ShortcutMode"
     private let layoutKey = "AltSwitch_SwitcherLayout"
     private let hasCompletedSetupKey = "AltSwitch_HasCompletedSetup"
+    private let languageKey = "AltSwitch_Language"
 
     @Published public var shortcutMode: ShortcutMode {
         didSet {
@@ -57,6 +58,13 @@ public class AppSettings: ObservableObject {
         }
     }
 
+    /// `.lproj` code of the UI language, or `Localization.systemLanguage` to follow macOS
+    @Published public var language: String {
+        didSet {
+            defaults.set(language, forKey: languageKey)
+        }
+    }
+
     private init() {
         if let saved = defaults.string(forKey: shortcutKey),
            let mode = ShortcutMode(rawValue: saved) {
@@ -73,5 +81,12 @@ public class AppSettings: ObservableObject {
         }
 
         self.hasCompletedSetup = defaults.bool(forKey: hasCompletedSetupKey)
+
+        if let savedLanguage = defaults.string(forKey: languageKey),
+           Localization.supportedLanguages.contains(where: { $0.code == savedLanguage }) {
+            self.language = savedLanguage
+        } else {
+            self.language = Localization.systemLanguage
+        }
     }
 }

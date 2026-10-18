@@ -1,0 +1,6 @@
+/* SPDX-License-Identifier: MIT */
+/* Permission texts macOS shows for AltSwitch (de) */
+
+"NSAccessibilityUsageDescription" = "AltSwitch benötigt Bedienungshilfen, um Fenster zu fokussieren und globale Kurzbefehle zu erfassen.";
+"NSAppleEventsUsageDescription" = "AltSwitch benötigt Bedienungshilfen, um Fenster zu fokussieren und globale Kurzbefehle zu erfassen.";
+"NSScreenCaptureUsageDescription" = "AltSwitch benötigt Zugriff auf die Bildschirmaufnahme, um Live-Fenstervorschauen im Umschalter anzuzeigen.";

@@ -45,6 +45,7 @@ loslassen – und du bist im gewünschten Fenster.
   einzelner Klick aktiviert eine Karte.
 - **Minimierte Fenster** sind dabei, mit Badge markiert, und werden beim Auswählen
   wiederhergestellt.
+- **25 Sprachen** – folgt der macOS-Sprache oder der im Menü gewählten (Sprache).
 - **Menüleisten-App** – kein Dock-Icon, ein Einrichtungsassistent für die macOS-Berechtigungen,
   auf Wunsch Start beim Anmelden.
 - **Nativ und schlank** – Swift, AppKit und SwiftUI, kein Electron.
