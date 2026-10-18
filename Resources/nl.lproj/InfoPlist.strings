@@ -1,0 +1,6 @@
+/* SPDX-License-Identifier: MIT */
+/* Permission texts macOS shows for AltSwitch (nl) */
+
+"NSAccessibilityUsageDescription" = "AltSwitch heeft toegang tot Toegankelijkheid nodig om vensters te activeren en globale toetscombinaties af te vangen.";
+"NSAppleEventsUsageDescription" = "AltSwitch heeft toegang tot Toegankelijkheid nodig om vensters te activeren en globale toetscombinaties af te vangen.";
+"NSScreenCaptureUsageDescription" = "AltSwitch heeft toegang tot Schermopname nodig om live venstervoorvertoningen in de wisselaar te tonen.";

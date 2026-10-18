@@ -67,6 +67,13 @@ if [ -f "Resources/AppIcon.icns" ]; then
     cp "Resources/AppIcon.icns" "${RESOURCES_DIR}/AppIcon.icns"
 fi
 
+# Translations: every Resources/<lang>.lproj (Localizable.strings, InfoPlist.strings)
+echo "-> Packaging localizations..."
+for LPROJ in Resources/*.lproj; do
+    [ -d "${LPROJ}" ] || continue
+    cp -R "${LPROJ}" "${RESOURCES_DIR}/"
+done
+
 # 4. Code Sign (Ad-Hoc, for local runs; releases are re-signed by tools/package_macos.sh)
 echo "-> Applying ad-hoc code signature..."
 codesign --force --sign - "${BUNDLE_NAME}"

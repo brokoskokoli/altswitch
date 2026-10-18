@@ -70,10 +70,10 @@ public class AppDelegate: NSObject, NSApplicationDelegate, HotkeyManagerDelegate
     private func showAlreadyRunningAlert() {
         NSApplication.shared.activate(ignoringOtherApps: true)
         let alert = NSAlert()
-        alert.messageText = "AltSwitch läuft bereits"
-        alert.informativeText = "Es kann nur eine Instanz von AltSwitch gleichzeitig laufen. Die laufende Instanz findest du in der Menüleiste."
+        alert.messageText = L("alert.alreadyRunning.title")
+        alert.informativeText = L("alert.alreadyRunning.message")
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: L("alert.ok"))
         alert.runModal()
     }
 

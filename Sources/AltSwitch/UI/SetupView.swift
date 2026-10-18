@@ -68,6 +68,8 @@ public class SetupViewModel: ObservableObject {
 @MainActor
 public struct SetupView: View {
     @ObservedObject public var viewModel: SetupViewModel
+    // Re-render when the UI language changes
+    @ObservedObject private var settings = AppSettings.shared
     public var onFinish: (() -> Void)?
 
     public init(viewModel: SetupViewModel, onFinish: (() -> Void)? = nil) {
@@ -102,11 +104,11 @@ public struct SetupView: View {
                 }
                 .padding(.top, 24)
 
-                Text("Willkommen bei AltSwitch")
+                Text(verbatim: L("setup.welcome"))
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.primary)
 
-                Text("Ersteinrichtung & Berechtigungen für den Windows-Style Fenster-Umschalter.")
+                Text(verbatim: L("setup.subtitle"))
                     .font(.system(size: 12))
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
@@ -120,10 +122,10 @@ public struct SetupView: View {
                     // Step 1: Accessibility
                     setupCard(
                         stepNumber: 1,
-                        title: "Bedienungshilfen (Accessibility)",
+                        title: L("setup.accessibility.title"),
                         symbol: "hand.raised.fill",
                         symbolColor: .blue,
-                        description: "Wird benötigt, um ⌥-Tab / ⌘-Tab global abzufangen und das ausgewählte Fenster in den Vordergrund zu holen.",
+                        description: L("setup.accessibility.description"),
                         isGranted: viewModel.isAccessibilityGranted,
                         onOpenSettings: {
                             PermissionsManager.shared.requestAndOpenAccessibility()
@@ -133,10 +135,10 @@ public struct SetupView: View {
                     // Step 2: Screen Recording
                     setupCard(
                         stepNumber: 2,
-                        title: "Bildschirmaufnahme (Screen Recording)",
+                        title: L("setup.screenRecording.title"),
                         symbol: "camera.metering.matrix",
                         symbolColor: .purple,
-                        description: "Wird für die Live-Screenshots / Thumbnails der offenen Fenster benötigt.",
+                        description: L("setup.screenRecording.description"),
                         isGranted: viewModel.isScreenRecordingGranted,
                         onOpenSettings: {
                             PermissionsManager.shared.requestAndOpenScreenRecording()
@@ -158,7 +160,7 @@ public struct SetupView: View {
                 Button(action: {
                     dismissSetup()
                 }) {
-                    Text("Später konfigurieren")
+                    Text(verbatim: L("setup.later"))
                         .font(.system(size: 12))
                         .foregroundColor(.secondary)
                 }
@@ -170,7 +172,7 @@ public struct SetupView: View {
                     completeSetup()
                 }) {
                     HStack(spacing: 6) {
-                        Text("Fertigstellen & Loslegen")
+                        Text(verbatim: L("setup.finish"))
                             .font(.system(size: 13, weight: .semibold))
                         Image(systemName: "arrow.right.circle.fill")
                             .font(.system(size: 14))
@@ -218,7 +220,7 @@ public struct SetupView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Schritt \(stepNumber): \(title)")
+                    Text(verbatim: L("setup.step", stepNumber, title))
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(.primary)
                 }
@@ -231,7 +233,7 @@ public struct SetupView: View {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 13))
                             .foregroundColor(.green)
-                        Text("Aktiviert")
+                        Text(verbatim: L("setup.enabled"))
                             .font(.system(size: 12, weight: .medium))
                             .foregroundColor(.green)
                     }
@@ -245,7 +247,7 @@ public struct SetupView: View {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .font(.system(size: 11))
                             .foregroundColor(.orange)
-                        Text("Erforderlich")
+                        Text(verbatim: L("setup.required"))
                             .font(.system(size: 11, weight: .medium))
                             .foregroundColor(.orange)
                     }
@@ -268,7 +270,7 @@ public struct SetupView: View {
                         HStack(spacing: 5) {
                             Image(systemName: "gearshape")
                                 .font(.system(size: 11))
-                            Text("Systemeinstellungen öffnen")
+                            Text(verbatim: L("setup.openSettings"))
                                 .font(.system(size: 11, weight: .medium))
                         }
                     }
@@ -303,7 +305,7 @@ public struct SetupView: View {
                         .foregroundColor(.orange)
                 }
 
-                Text("Schritt 3: Schnelleinstellungen")
+                Text(verbatim: L("setup.step", 3, L("setup.quickSettings")))
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.primary)
 
@@ -311,34 +313,34 @@ public struct SetupView: View {
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Tastenkombination:")
+                Text(verbatim: L("settings.shortcut"))
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.secondary)
 
                 Picker("", selection: $viewModel.selectedShortcut) {
-                    Text("Option + Tab (⌥-Tab Windows-Style)").tag(ShortcutMode.optionTab)
-                    Text("Command + Tab (⌘-Tab)").tag(ShortcutMode.cmdTab)
+                    Text(verbatim: L("setup.shortcut.optionTab")).tag(ShortcutMode.optionTab)
+                    Text(verbatim: ShortcutMode.cmdTab.title).tag(ShortcutMode.cmdTab)
                 }
                 .pickerStyle(.segmented)
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Layout-Modus:")
+                Text(verbatim: L("setup.layout"))
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.secondary)
 
                 Picker("", selection: $viewModel.selectedLayout) {
-                    Text("Kompakt (Fokus)").tag(SwitcherLayout.compact)
-                    Text("Alle Fenster (Raster-Übersicht)").tag(SwitcherLayout.grid)
+                    Text(verbatim: SwitcherLayout.compact.title).tag(SwitcherLayout.compact)
+                    Text(verbatim: SwitcherLayout.grid.title).tag(SwitcherLayout.grid)
                 }
                 .pickerStyle(.segmented)
             }
 
             Toggle(isOn: $viewModel.autostartEnabled) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Beim Anmelden automatisch starten (Autostart)")
+                    Text(verbatim: L("setup.autostart"))
                         .font(.system(size: 12, weight: .medium))
-                    Text("AltSwitch läuft unauffällig in der Menüleiste.")
+                    Text(verbatim: L("setup.autostart.detail"))
                         .font(.system(size: 10.5))
                         .foregroundColor(.secondary)
                 }

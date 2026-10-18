@@ -1,0 +1,6 @@
+/* SPDX-License-Identifier: MIT */
+/* Permission texts macOS shows for AltSwitch (ro) */
+
+"NSAccessibilityUsageDescription" = "AltSwitch are nevoie de acces la Accesibilitate pentru a activa ferestre și a intercepta scurtături de tastatură globale.";
+"NSAppleEventsUsageDescription" = "AltSwitch are nevoie de acces la Accesibilitate pentru a activa ferestre și a intercepta scurtături de tastatură globale.";
+"NSScreenCaptureUsageDescription" = "AltSwitch are nevoie de acces la înregistrarea ecranului pentru a afișa previzualizări în timp real ale ferestrelor în comutator.";

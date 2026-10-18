@@ -1,0 +1,6 @@
+/* SPDX-License-Identifier: MIT */
+/* Permission texts macOS shows for AltSwitch (cs) */
+
+"NSAccessibilityUsageDescription" = "AltSwitch potřebuje přístup ke Zpřístupnění, aby mohl aktivovat okna a zachytávat globální klávesové zkratky.";
+"NSAppleEventsUsageDescription" = "AltSwitch potřebuje přístup ke Zpřístupnění, aby mohl aktivovat okna a zachytávat globální klávesové zkratky.";
+"NSScreenCaptureUsageDescription" = "AltSwitch potřebuje přístup k nahrávání obrazovky, aby mohl v přepínači zobrazovat živé náhledy oken.";

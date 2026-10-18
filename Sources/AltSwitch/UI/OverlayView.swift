@@ -123,7 +123,7 @@ struct OverlayView: View {
                     Image(systemName: "macwindow.badge.plus")
                         .font(.system(size: 36))
                         .foregroundColor(.secondary)
-                    Text("Keine geöffneten Fenster gefunden")
+                    Text(verbatim: L("overlay.noWindows"))
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.secondary)
                 }
@@ -143,16 +143,19 @@ struct OverlayView: View {
                                 .frame(width: 20, height: 20)
                         }
 
-                        Text(win.appName)
+                        Text(verbatim: win.appName)
                             .font(.system(size: 13, weight: .bold))
+                            .lineLimit(1)
 
                         if win.isMinimized {
                             HStack(spacing: 3) {
                                 Image(systemName: "arrow.down.forward.and.arrow.up.backward")
                                     .font(.system(size: 9))
-                                Text("Minimiert")
+                                Text(verbatim: L("overlay.minimized"))
                                     .font(.system(size: 10, weight: .medium))
+                                    .lineLimit(1)
                             }
+                            .fixedSize()
                             .foregroundColor(.secondary)
                             .padding(.horizontal, 5)
                             .padding(.vertical, 2)
@@ -160,10 +163,10 @@ struct OverlayView: View {
                         }
 
                         if !win.windowTitle.isEmpty && win.windowTitle != win.appName {
-                            Text("—")
+                            Text(verbatim: "—")
                                 .foregroundColor(.secondary)
 
-                            Text(win.windowTitle)
+                            Text(verbatim: win.windowTitle)
                                 .font(.system(size: 13, weight: .regular))
                                 .foregroundColor(.secondary)
                                 .lineLimit(1)
@@ -172,7 +175,7 @@ struct OverlayView: View {
 
                     Spacer()
 
-                    Text("\(viewModel.selectedIndex + 1) / \(viewModel.windows.count)")
+                    Text(verbatim: "\(viewModel.selectedIndex + 1) / \(viewModel.windows.count)")
                         .font(.system(size: 11, weight: .medium, design: .monospaced))
                         .foregroundColor(.secondary)
                         .padding(.horizontal, 8)
@@ -247,16 +250,12 @@ struct OverlayView: View {
                     }
                 }
 
-                // Footer: Keyboard Navigation Hints
-                HStack(spacing: 16) {
-                    HintView(key: "⇥", text: "Weiter")
-                    HintView(key: "⇧⇥ / ⇧", text: "Zurück")
-                    HintView(key: "← ↑ → ↓", text: "Navigieren")
-                    HintView(key: "Esc", text: "Abbrechen")
-                    Spacer()
-                    Text("Taste loslassen zum Wechseln")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(.secondary)
+                // Footer: Keyboard Navigation Hints. Long translations drop the release hint first,
+                // then the navigation hints, instead of being cut off.
+                ViewThatFits(in: .horizontal) {
+                    footer(showNavigate: true, showRelease: true)
+                    footer(showNavigate: true, showRelease: false)
+                    footer(showNavigate: false, showRelease: false)
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 12)
@@ -275,20 +274,42 @@ struct OverlayView: View {
     }
 }
 
+extension OverlayView {
+    private func footer(showNavigate: Bool, showRelease: Bool) -> some View {
+        HStack(spacing: 16) {
+            HintView(key: "⇥", text: L("overlay.hint.next"))
+            HintView(key: "⇧⇥ / ⇧", text: L("overlay.hint.back"))
+            if showNavigate {
+                HintView(key: "← ↑ → ↓", text: L("overlay.hint.navigate"))
+            }
+            HintView(key: "Esc", text: L("overlay.hint.cancel"))
+            Spacer(minLength: 0)
+            if showRelease {
+                Text(verbatim: L("overlay.hint.release"))
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+                    .fixedSize()
+            }
+        }
+    }
+}
+
 struct HintView: View {
     let key: String
     let text: String
 
     var body: some View {
         HStack(spacing: 4) {
-            Text(key)
+            Text(verbatim: key)
                 .font(.system(size: 10, weight: .semibold, design: .monospaced))
                 .padding(.horizontal, 5)
                 .padding(.vertical, 2)
                 .background(RoundedRectangle(cornerRadius: 4).fill(Color.white.opacity(0.15)))
-            Text(text)
+            Text(verbatim: text)
                 .font(.system(size: 10))
                 .foregroundColor(.secondary)
+                .lineLimit(1)
         }
     }
 }

@@ -22,7 +22,6 @@ public class StatusBarController: NSObject, NSMenuDelegate {
             } else {
                 button.title = "⌥⇥"
             }
-            button.toolTip = "AltSwitch — Windows-Style Window Switcher"
         }
 
         menu.delegate = self
@@ -36,6 +35,7 @@ public class StatusBarController: NSObject, NSMenuDelegate {
 
     private func rebuildMenu() {
         menu.removeAllItems()
+        statusItem.button?.toolTip = L("menu.tooltip")
 
         // 1. App Header
         let headerItem = NSMenuItem(title: "AltSwitch v1.0", action: nil, keyEquivalent: "")
@@ -43,7 +43,7 @@ public class StatusBarController: NSObject, NSMenuDelegate {
         menu.addItem(headerItem)
 
         let setupItem = NSMenuItem(
-            title: "Einrichtungs-Assistent öffnen...",
+            title: L("menu.openSetup"),
             action: #selector(handleOpenSetup),
             keyEquivalent: ""
         )
@@ -55,12 +55,12 @@ public class StatusBarController: NSObject, NSMenuDelegate {
         // 2. Permissions Section
         let axGranted = PermissionsManager.shared.isAccessibilityGranted
         if axGranted {
-            let axItem = NSMenuItem(title: "✓ Bedienungshilfen aktiviert", action: nil, keyEquivalent: "")
+            let axItem = NSMenuItem(title: L("menu.accessibilityEnabled"), action: nil, keyEquivalent: "")
             axItem.isEnabled = false
             menu.addItem(axItem)
         } else {
             let axItem = NSMenuItem(
-                title: "⚠️ Bedienungshilfen erlauben...",
+                title: L("menu.allowAccessibility"),
                 action: #selector(handleRequestAccessibility),
                 keyEquivalent: ""
             )
@@ -70,12 +70,12 @@ public class StatusBarController: NSObject, NSMenuDelegate {
 
         let scrGranted = PermissionsManager.shared.isScreenRecordingGranted
         if scrGranted {
-            let scrItem = NSMenuItem(title: "✓ Bildschirmaufnahme aktiviert", action: nil, keyEquivalent: "")
+            let scrItem = NSMenuItem(title: L("menu.screenRecordingEnabled"), action: nil, keyEquivalent: "")
             scrItem.isEnabled = false
             menu.addItem(scrItem)
         } else {
             let scrItem = NSMenuItem(
-                title: "⚠️ Bildschirmaufnahme erlauben...",
+                title: L("menu.allowScreenRecording"),
                 action: #selector(handleRequestScreenRecording),
                 keyEquivalent: ""
             )
@@ -86,14 +86,14 @@ public class StatusBarController: NSObject, NSMenuDelegate {
         menu.addItem(NSMenuItem.separator())
 
         // 3. Shortcut Selection
-        let shortcutHeader = NSMenuItem(title: "Tastenkombination:", action: nil, keyEquivalent: "")
+        let shortcutHeader = NSMenuItem(title: L("settings.shortcut"), action: nil, keyEquivalent: "")
         shortcutHeader.isEnabled = false
         menu.addItem(shortcutHeader)
 
         let currentShortcut = AppSettings.shared.shortcutMode
 
         let optTabItem = NSMenuItem(
-            title: "    Option + Tab (⌥-Tab)",
+            title: "    " + ShortcutMode.optionTab.title,
             action: #selector(selectOptionTabShortcut),
             keyEquivalent: ""
         )
@@ -102,7 +102,7 @@ public class StatusBarController: NSObject, NSMenuDelegate {
         menu.addItem(optTabItem)
 
         let cmdTabItem = NSMenuItem(
-            title: "    Command + Tab (⌘-Tab)",
+            title: "    " + ShortcutMode.cmdTab.title,
             action: #selector(selectCmdTabShortcut),
             keyEquivalent: ""
         )
@@ -113,14 +113,14 @@ public class StatusBarController: NSObject, NSMenuDelegate {
         menu.addItem(NSMenuItem.separator())
 
         // 4. Layout Selection
-        let layoutHeader = NSMenuItem(title: "Layout:", action: nil, keyEquivalent: "")
+        let layoutHeader = NSMenuItem(title: L("menu.layout"), action: nil, keyEquivalent: "")
         layoutHeader.isEnabled = false
         menu.addItem(layoutHeader)
 
         let currentLayout = AppSettings.shared.switcherLayout
 
         let compactItem = NSMenuItem(
-            title: "    Kompakt (Fokus)",
+            title: "    " + SwitcherLayout.compact.title,
             action: #selector(selectCompactLayout),
             keyEquivalent: ""
         )
@@ -129,7 +129,7 @@ public class StatusBarController: NSObject, NSMenuDelegate {
         menu.addItem(compactItem)
 
         let gridItem = NSMenuItem(
-            title: "    Alle Fenster (Raster-Übersicht)",
+            title: "    " + SwitcherLayout.grid.title,
             action: #selector(selectGridLayout),
             keyEquivalent: ""
         )
@@ -141,7 +141,7 @@ public class StatusBarController: NSObject, NSMenuDelegate {
 
         // 5. Autostart
         let autostartItem = NSMenuItem(
-            title: "Beim Anmelden starten",
+            title: L("menu.startAtLogin"),
             action: #selector(toggleAutostart),
             keyEquivalent: ""
         )
@@ -149,16 +149,56 @@ public class StatusBarController: NSObject, NSMenuDelegate {
         autostartItem.state = AutostartManager.shared.isAutostartEnabled ? .on : .off
         menu.addItem(autostartItem)
 
+        // 6. Language
+        menu.addItem(languageMenuItem())
+
         menu.addItem(NSMenuItem.separator())
 
-        // 6. Quit
+        // 7. Quit
         let quitItem = NSMenuItem(
-            title: "AltSwitch beenden",
+            title: L("menu.quit"),
             action: #selector(handleQuit),
             keyEquivalent: "q"
         )
         quitItem.target = self
         menu.addItem(quitItem)
+    }
+
+    /// Submenu with "System Language" and every translation in its own name. The title keeps the
+    /// English word, so someone who picked a language they cannot read still finds the way back.
+    private func languageMenuItem() -> NSMenuItem {
+        let localizedTitle = L("menu.language")
+        let title = (localizedTitle == "Language") ? localizedTitle : "\(localizedTitle) / Language"
+        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        let submenu = NSMenu(title: title)
+        let current = AppSettings.shared.language
+
+        let systemItem = NSMenuItem(
+            title: L("menu.systemLanguage"),
+            action: #selector(selectLanguage(_:)),
+            keyEquivalent: ""
+        )
+        systemItem.target = self
+        systemItem.representedObject = Localization.systemLanguage
+        systemItem.state = (current == Localization.systemLanguage) ? .on : .off
+        submenu.addItem(systemItem)
+
+        submenu.addItem(NSMenuItem.separator())
+
+        for language in Localization.supportedLanguages {
+            let languageItem = NSMenuItem(
+                title: language.nativeName,
+                action: #selector(selectLanguage(_:)),
+                keyEquivalent: ""
+            )
+            languageItem.target = self
+            languageItem.representedObject = language.code
+            languageItem.state = (current == language.code) ? .on : .off
+            submenu.addItem(languageItem)
+        }
+
+        item.submenu = submenu
+        return item
     }
 
     // MARK: - Actions
@@ -203,6 +243,12 @@ public class StatusBarController: NSObject, NSMenuDelegate {
     @objc private func toggleAutostart() {
         let current = AutostartManager.shared.isAutostartEnabled
         _ = AutostartManager.shared.setAutostart(enabled: !current)
+        rebuildMenu()
+    }
+
+    @objc private func selectLanguage(_ sender: NSMenuItem) {
+        guard let code = sender.representedObject as? String else { return }
+        AppSettings.shared.language = code
         rebuildMenu()
     }
 

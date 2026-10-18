@@ -9,6 +9,8 @@ struct WindowCardView: View {
     let isScreenRecordingGranted: Bool
     let onSelect: () -> Void
     let onHover: () -> Void
+    // Re-render when the UI language changes
+    @ObservedObject private var settings = AppSettings.shared
 
     var body: some View {
         Button(action: onSelect) {
@@ -29,7 +31,7 @@ struct WindowCardView: View {
 
                     VStack(alignment: .leading, spacing: 1) {
                         HStack(spacing: 4) {
-                            Text(item.appName)
+                            Text(verbatim: item.appName)
                                 .font(.system(size: 12, weight: .bold))
                                 .foregroundColor(.primary)
                                 .lineLimit(1)
@@ -38,9 +40,11 @@ struct WindowCardView: View {
                                 HStack(spacing: 2) {
                                     Image(systemName: "arrow.down.forward.and.arrow.up.backward")
                                         .font(.system(size: 7))
-                                    Text("Minimiert")
+                                    Text(verbatim: L("overlay.minimized"))
                                         .font(.system(size: 8, weight: .medium))
+                                        .lineLimit(1)
                                 }
+                                .fixedSize()
                                 .foregroundColor(.secondary)
                                 .padding(.horizontal, 4)
                                 .padding(.vertical, 1)
@@ -49,7 +53,7 @@ struct WindowCardView: View {
                         }
 
                         if !item.windowTitle.isEmpty && item.windowTitle != item.appName {
-                            Text(item.windowTitle)
+                            Text(verbatim: item.windowTitle)
                                 .font(.system(size: 11, weight: .regular))
                                 .foregroundColor(.secondary)
                                 .lineLimit(1)
@@ -82,7 +86,7 @@ struct WindowCardView: View {
                                     .opacity(0.7)
                             }
 
-                            Text("Minimiert")
+                            Text(verbatim: L("overlay.minimized"))
                                 .font(.system(size: 11, weight: .medium))
                                 .foregroundColor(.secondary)
                         }
@@ -102,14 +106,15 @@ struct WindowCardView: View {
                                 HStack(spacing: 4) {
                                     Image(systemName: "lock.shield")
                                         .font(.system(size: 10))
-                                    Text("Bildschirmaufnahme erforderlich")
+                                    Text(verbatim: L("card.screenRecordingRequired"))
                                         .font(.system(size: 10, weight: .medium))
+                                        .fixedSize(horizontal: false, vertical: true)
                                 }
                                 .foregroundColor(.orange)
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, 6)
                             } else {
-                                Text("Wird geladen...")
+                                Text(verbatim: L("card.loading"))
                                     .font(.system(size: 10))
                                     .foregroundColor(.secondary)
                             }

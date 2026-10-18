@@ -1,0 +1,6 @@
+/* SPDX-License-Identifier: MIT */
+/* Permission texts macOS shows for AltSwitch (it) */
+
+"NSAccessibilityUsageDescription" = "AltSwitch richiede l’accesso ad Accessibilità per mettere a fuoco le finestre e intercettare le abbreviazioni da tastiera globali.";
+"NSAppleEventsUsageDescription" = "AltSwitch richiede l’accesso ad Accessibilità per mettere a fuoco le finestre e intercettare le abbreviazioni da tastiera globali.";
+"NSScreenCaptureUsageDescription" = "AltSwitch richiede l’accesso a Registrazione schermo per mostrare anteprime dal vivo delle finestre nel selettore.";

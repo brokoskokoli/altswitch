@@ -2,6 +2,7 @@
 
 import Cocoa
 import SwiftUI
+import Combine
 
 @MainActor
 public class SetupWindowController: NSObject, NSWindowDelegate {
@@ -10,6 +11,7 @@ public class SetupWindowController: NSObject, NSWindowDelegate {
     private var window: NSWindow?
     private var viewModel: SetupViewModel?
     private var isCleaningUp = false
+    private var languageCancellable: AnyCancellable?
 
     private override init() {
         super.init()
@@ -29,7 +31,7 @@ public class SetupWindowController: NSObject, NSWindowDelegate {
                 backing: .buffered,
                 defer: false
             )
-            win.title = "Willkommen bei AltSwitch — Ersteinrichtung"
+            win.title = L("setup.windowTitle")
             win.isReleasedWhenClosed = false
             win.isMovableByWindowBackground = true
             win.delegate = self
@@ -39,6 +41,14 @@ public class SetupWindowController: NSObject, NSWindowDelegate {
             }
             win.contentView = NSHostingView(rootView: setupView)
             self.window = win
+
+            // The SwiftUI content follows a language switch by itself, the title bar needs a push.
+            // Deferred, because @Published sends before the new value is stored.
+            languageCancellable = AppSettings.shared.$language
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] _ in
+                    self?.window?.title = L("setup.windowTitle")
+                }
         }
 
         viewModel?.startPolling()
@@ -74,6 +84,7 @@ public class SetupWindowController: NSObject, NSWindowDelegate {
 
         viewModel?.stopPolling()
         viewModel = nil
+        languageCancellable = nil
 
         if let win = window {
             win.delegate = nil
