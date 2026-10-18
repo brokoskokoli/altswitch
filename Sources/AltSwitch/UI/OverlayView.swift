@@ -184,7 +184,7 @@ struct OverlayView: View {
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
                         }
-                        .onChange(of: viewModel.selectedIndex) { _, newIndex in
+                        .onChange(of: viewModel.selectedIndex) { newIndex in
                             withAnimation(.easeOut(duration: 0.15)) {
                                 proxy.scrollTo(newIndex, anchor: .center)
                             }
@@ -212,7 +212,7 @@ struct OverlayView: View {
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
                         }
-                        .onChange(of: viewModel.selectedIndex) { _, newIndex in
+                        .onChange(of: viewModel.selectedIndex) { newIndex in
                             withAnimation(.easeOut(duration: 0.15)) {
                                 proxy.scrollTo(newIndex, anchor: .center)
                             }

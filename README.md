@@ -94,12 +94,18 @@ Du kannst das Erscheinungsbild nach deinen Wünschen anpassen:
 
 ## 🚀 Installation & Erste Schritte
 
-### Option 1: Fertiges Release herunterladen (Empfohlen)
+### Option 1: Homebrew
+
+```bash
+brew install --cask brokoskokoli/tap/altswitch
+```
+
+### Option 2: Fertiges Release herunterladen
 1. Lade das neueste Release (`.dmg` oder `.zip`) von [GitHub Releases](https://github.com/brokoskokoli/altswitch/releases) herunter.
 2. Öffne die `.dmg` und ziehe **AltSwitch** in deinen `Programme` (`/Applications`) Ordner.
 3. Starte AltSwitch. Beim ersten Start führt dich der integrierte Einrichtungs-Assistent durch die beiden benötigten macOS-Berechtigungen.
 
-### Option 2: Aus dem Quellcode bauen
+### Option 3: Aus dem Quellcode bauen
 Voraussetzungen:
 - macOS 13.0 oder neuer
 - Xcode Command Line Tools (`xcode-select --install`)
@@ -167,8 +173,9 @@ altswitch/
 ├── Resources/
 │   ├── Info.plist                        # LSUIElement=true, Permissions Usage Descriptions
 │   └── AppIcon.icns                      # Offizielles AltSwitch Icon
-├── scripts/
-│   └── setup-secrets.sh                  # Interaktives Einrichten von Apple Developer GitHub Secrets
+├── tools/
+│   ├── setup_release_secrets.sh          # Einmalig: Release-Secrets interaktiv einrichten
+│   └── package_macos.sh                  # Signieren, notarisieren, DMG/ZIP
 ├── .github/workflows/
 │   └── release.yml                       # Automatische GitHub Actions Release Pipeline
 ├── build.sh                              # High-Performance Swift Build & Packaging Skript
@@ -177,51 +184,14 @@ altswitch/
 
 ---
 
-## 🚢 CI/CD & GitHub Actions Release
+## 🚢 Releases
 
-Dieses Repository enthält eine produktionsreife GitHub Actions Release Pipeline (`.github/workflows/release.yml`):
-- **Automatischer Trigger**: Erstelle einfach einen Git-Tag (z.B. `v1.0.1`), um automatisch einen Release-Build zu starten.
-- **Apple Developer ID Signierung & Notarisierung**: Unterstützt automatische Signierung mit Hardened Runtime und Apple-Notarisierung via `xcrun notarytool`.
-- **Graceful Fallback**: Sind keine Developer-Secrets hinterlegt, baut die Pipeline die App dennoch ad-hoc signiert und stellt DMG & ZIP als Download bereit.
+Releases entstehen per Tag `vX.Y.Z` über GitHub Actions: Universal-Build, Signatur mit Developer ID
+und Hardened Runtime, Apple-Notarisierung, DMG/ZIP mit SHA-256, Release-Text aus dem
+[CHANGELOG](CHANGELOG.md), anschließend Update des Homebrew-Casks. Jeder Schritt mit Secrets
+wartet auf eine Freigabe im GitHub-Environment `release`.
 
-### 🔑 Benötigte GitHub Secrets
-
-Die Pipeline unterstützt die moderne, von Apple empfohlene **App Store Connect API Key** Authentifizierung (keine 2FA-Hürden in CI/CD, kein persönliches Apple-Passwort nötig):
-
-| Secret | Beschreibung |
-| :--- | :--- |
-| `APPLE_CERTIFICATE_BASE64` | Dein Apple Developer ID Application Zertifikat (`.p12`) als Base64 |
-| `APPLE_CERTIFICATE_PASSWORD` | Das Passwort, mit dem die `.p12`-Datei geschützt ist |
-| `APPLE_API_KEY_BASE64` | Der App Store Connect API Private Key (`AuthKey_XXXXXX.p8`) als Base64 |
-| `APPLE_API_KEY_ID` | Die 10-stellige Schlüssel-ID (z.B. `2X9R427ND4`) |
-| `APPLE_API_ISSUER` | Die Aussteller-ID / Issuer ID (UUID, z.B. `57246542-96fe-1a63-e053-0824d011072a`) |
-
-> [!TIP]
-> **Woher bekommst du den App Store Connect API Key?**
-> 1. Öffne [App Store Connect — Integrationen / API](https://appstoreconnect.apple.com/access/integrations/api).
-> 2. Gehe auf **Benutzer und Zugriff** → Tab **Integrationen** (oder **Schlüssel**) → **App Store Connect-API**.
-> 3. Klicke auf **+** und erstelle einen neuen Schlüssel mit der Rolle *Entwickler* oder *App-Manager*.
-> 4. Lade den privaten Schlüssel (`AuthKey_XXXXXXXXXX.p8`) herunter (Achtung: Apple erlaubt den Download nur ein einziges Mal!).
-> 5. Kopiere die **Schlüssel-ID** (Key ID) und die **Aussteller-ID** (Issuer ID) oben auf der Seite.
-
-*(Optional: Weiterhin wird auch die ältere Legacy-Methode mit `APPLE_ID`, `APPLE_TEAM_ID` und `APPLE_APP_SPECIFIC_PASSWORD` abwärtskompatibel unterstützt).*
-
-### ⚡ Schnelleinrichtung mit Setup-Skript
-
-Du musst die Secrets nicht manuell in GitHub anlegen. Führe einfach im Projektverzeichnis aus:
-
-```bash
-./scripts/setup-secrets.sh
-```
-
-Das interaktive Skript fragt nach den Dateipfaden zu deinem `.p12`-Zertifikat und dem `AuthKey_XXXXXX.p8`, konvertiert sie automatisch nach Base64 und setzt alle Secrets direkt in deinem GitHub-Repository via `gh secret set`.
-
-Danach kannst du ein neues Release veröffentlichen:
-
-```bash
-git tag v1.0.1
-git push origin v1.0.1
-```
+Ablauf, Secrets und Notfallweg: [docs/RELEASING.md](docs/RELEASING.md).
 
 ---
 

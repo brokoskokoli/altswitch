@@ -1,170 +1,246 @@
-name: Release AltSwitch
-
+# Release pipeline: tag vX.Y.Z → build (universal) → sign → notarize → staple → GitHub Release
+# (draft) with DMG, ZIP, SHA-256 → approval → release published → Homebrew tap.
+# Run the workflow on main = dry run: signed, notarized artifact, nothing published.
+# Secrets: see tools/setup_release_secrets.sh and docs/RELEASING.md.
+name: Release
 on:
   push:
-    tags:
-      - 'v*'
+    tags: ['v*']
   workflow_dispatch:
-    inputs:
-      tag_name:
-        description: 'Release Tag (e.g. v1.0.0)'
-        required: false
-        default: 'v1.0.0'
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  APP_NAME: AltSwitch
 
 jobs:
-  build-and-release:
-    name: Build & Release AltSwitch
-    runs-on: macos-14
 
+  build:
+    name: Build, sign, notarize
+    if: github.repository == 'brokoskokoli/altswitch' && (github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v'))
+    runs-on: macos-15
+    environment: release
+    timeout-minutes: 90
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Determine Version
-        id: version
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG="${{ github.event.inputs.tag_name }}"
-          else
-            TAG="${GITHUB_REF#refs/tags/}"
-          fi
-          echo "TAG=${TAG}" >> "$GITHUB_OUTPUT"
-          VERSION="${TAG#v}"
-          echo "VERSION=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "Building version ${VERSION} for release tag ${TAG}"
-
-      - name: Build Application Bundle
-        run: |
-          chmod +x build.sh
-          ./build.sh
-
-      - name: Sign & Notarize (with Graceful Fallback)
-        id: codesign
-        env:
-          APPLE_CERTIFICATE_BASE64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_API_KEY_BASE64: ${{ secrets.APPLE_API_KEY_BASE64 }}
-          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-        run: |
-          TAG="${{ steps.version.outputs.TAG }}"
-
-          HAS_API_KEY_AUTH=false
-          HAS_LEGACY_AUTH=false
-          if [ -n "${APPLE_API_KEY_BASE64}" ] && [ -n "${APPLE_API_KEY_ID}" ] && [ -n "${APPLE_API_ISSUER}" ]; then
-            HAS_API_KEY_AUTH=true
-          fi
-          if [ -n "${APPLE_ID}" ] && [ -n "${APPLE_TEAM_ID}" ] && [ -n "${APPLE_APP_SPECIFIC_PASSWORD}" ]; then
-            HAS_LEGACY_AUTH=true
-          fi
-
-          if [ -n "${APPLE_CERTIFICATE_BASE64}" ] && [ -n "${APPLE_CERTIFICATE_PASSWORD}" ] && { [ "$HAS_API_KEY_AUTH" = true ] || [ "$HAS_LEGACY_AUTH" = true ]; }; then
-            echo "=== Apple Developer Credentials detected. Performing Developer ID signing and notarization... ==="
-
-            KEYCHAIN_PATH=$RUNNER_TEMP/build.keychain
-            KEYCHAIN_PASSWORD=$(openssl rand -base64 24)
-            CERTIFICATE_PATH=$RUNNER_TEMP/developer_id.p12
-
-            # Decode certificate
-            printf '%s' "${APPLE_CERTIFICATE_BASE64}" | base64 --decode > "${CERTIFICATE_PATH}"
-
-            # Create and configure temporary keychain
-            security create-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
-            security set-keychain-settings -lut 21600 "${KEYCHAIN_PATH}"
-            security unlock-keychain -p "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
-
-            # Import certificate into keychain
-            security import "${CERTIFICATE_PATH}" -P "${APPLE_CERTIFICATE_PASSWORD}" -A -t cert -f pkcs12 -k "${KEYCHAIN_PATH}"
-            security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${KEYCHAIN_PASSWORD}" "${KEYCHAIN_PATH}"
-            security list-keychains -d user -s "${KEYCHAIN_PATH}" $(security list-keychains -d user | tr -d '"')
-
-            # Identify Developer ID Application certificate identity
-            IDENTITY=$(security find-identity -v -p codesigning "${KEYCHAIN_PATH}" | grep "Developer ID Application:" | head -1 | awk -F '"' '{print $2}')
-
-            if [ -z "${IDENTITY}" ]; then
-              echo "::warning::Developer ID Application certificate not found in keychain. Falling back to ad-hoc signature."
-            else
-              echo "-> Signing with identity: ${IDENTITY}"
-              codesign --force --deep --options runtime --timestamp --sign "${IDENTITY}" --keychain "${KEYCHAIN_PATH}" AltSwitch.app
-              codesign --verify --deep --strict AltSwitch.app
-
-              # Package DMG
-              mkdir -p dmg_folder
-              cp -R AltSwitch.app dmg_folder/
-              ln -s /Applications dmg_folder/Applications
-              hdiutil create -volname "AltSwitch" -srcfolder dmg_folder -ov -format UDZO "AltSwitch-${TAG}.dmg"
-              rm -rf dmg_folder
-
-              # Notarize DMG
-              if [ "$HAS_API_KEY_AUTH" = true ]; then
-                echo "-> Submitting DMG for notarization using App Store Connect API Key..."
-                KEY_PATH="$RUNNER_TEMP/AuthKey_${APPLE_API_KEY_ID}.p8"
-                printf '%s' "${APPLE_API_KEY_BASE64}" | base64 --decode > "${KEY_PATH}"
-                chmod 600 "${KEY_PATH}"
-
-                xcrun notarytool submit "AltSwitch-${TAG}.dmg" \
-                  --key "${KEY_PATH}" \
-                  --key-id "${APPLE_API_KEY_ID}" \
-                  --issuer "${APPLE_API_ISSUER}" \
-                  --wait
-              else
-                echo "-> Submitting DMG for notarization using Apple ID and App-Specific Password..."
-                xcrun notarytool submit "AltSwitch-${TAG}.dmg" \
-                  --apple-id "${APPLE_ID}" \
-                  --team-id "${APPLE_TEAM_ID}" \
-                  --password "${APPLE_APP_SPECIFIC_PASSWORD}" \
-                  --wait
-              fi
-
-              echo "-> Stapling notarization ticket to DMG..."
-              xcrun stapler staple "AltSwitch-${TAG}.dmg"
-
-              # Staple App bundle and create ZIP
-              echo "-> Stapling notarization ticket to App bundle..."
-              xcrun stapler staple AltSwitch.app || true
-              ditto -c -k --keepParent AltSwitch.app "AltSwitch-${TAG}.zip"
-
-              # Cleanup temporary credentials and keychain
-              rm -f "${KEY_PATH:-}" "${CERTIFICATE_PATH:-}"
-              security delete-keychain "${KEYCHAIN_PATH}" 2>/dev/null || true
-
-              echo "SIGNED=true" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-          else
-            echo "::notice::Apple Developer Secrets not configured or incomplete. Packaging release with ad-hoc signature."
-          fi
-
-          # Fallback packaging (Ad-hoc signature)
-          mkdir -p dmg_folder
-          cp -R AltSwitch.app dmg_folder/
-          ln -s /Applications dmg_folder/Applications
-          hdiutil create -volname "AltSwitch" -srcfolder dmg_folder -ov -format UDZO "AltSwitch-${TAG}.dmg"
-          rm -rf dmg_folder
-          ditto -c -k --keepParent AltSwitch.app "AltSwitch-${TAG}.zip"
-          echo "SIGNED=false" >> "$GITHUB_OUTPUT"
-
-      - name: Generate Checksums
-        run: |
-          TAG="${{ steps.version.outputs.TAG }}"
-          shasum -a 256 "AltSwitch-${TAG}.dmg" "AltSwitch-${TAG}.zip" > checksums.txt
-          cat checksums.txt
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          tag_name: ${{ steps.version.outputs.TAG }}
-          name: AltSwitch ${{ steps.version.outputs.TAG }}
-          draft: false
-          prerelease: false
-          generate_release_notes: true
-          files: |
-            AltSwitch-${{ steps.version.outputs.TAG }}.dmg
-            AltSwitch-${{ steps.version.outputs.TAG }}.zip
-            checksums.txt
+          persist-credentials: false
+
+      - name: Build the app (universal)
+        # build.sh signs ad-hoc; package_macos.sh re-signs with the Developer ID.
+        run: |
+          set -euo pipefail
+          ./build.sh
+          lipo "$APP_NAME.app/Contents/MacOS/$APP_NAME" -verify_arch arm64 x86_64
+          echo "BUILT_APP=$APP_NAME.app" >> "$GITHUB_ENV"
+
+      - name: Version matches the tag
+        run: |
+          set -euo pipefail
+          v=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$BUILT_APP/Contents/Info.plist")
+          echo "APP_VERSION=$v" >> "$GITHUB_ENV"
+          if [[ "$GITHUB_REF" == refs/tags/v* && "v$v" != "$GITHUB_REF_NAME" ]]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match the app version $v"; exit 1
+          fi
+          echo "Version $v"
+
+      - name: Import the certificate into a temporary keychain
+        env:
+          MACOS_CERT_P12_BASE64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
+          MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+        run: |
+          set -euo pipefail
+          umask 077
+          dir="$RUNNER_TEMP/release-secrets"; mkdir -p "$dir"; chmod 700 "$dir"
+          echo "SECRETS_DIR=$dir" >> "$GITHUB_ENV"
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          echo "SIGN_KEYCHAIN=$keychain" >> "$GITHUB_ENV"
+          keychain_pw=$(uuidgen); echo "::add-mask::$keychain_pw"
+          printf '%s' "$MACOS_CERT_P12_BASE64" | base64 --decode > "$dir/cert.p12"
+          # `security` takes passwords only as arguments (visible in ps): feed its interactive
+          # mode on stdin instead (printf is a shell builtin).
+          q() { local s=${1//\\/\\\\}; s=${s//\"/\\\"}; printf '"%s"' "$s"; }
+          sec() { printf '%s\n' "$1" | security -i; }
+          [[ "$MACOS_CERT_PASSWORD" != *$'\n'* ]] || { echo "::error::MACOS_CERT_PASSWORD contains a line break"; exit 1; }
+          sec "create-keychain -p $(q "$keychain_pw") $(q "$keychain")"
+          security set-keychain-settings -lut 21600 "$keychain"
+          sec "unlock-keychain -p $(q "$keychain_pw") $(q "$keychain")"
+          sec "import $(q "$dir/cert.p12") -k $(q "$keychain") -f pkcs12 -P $(q "$MACOS_CERT_PASSWORD") -T /usr/bin/codesign -T /usr/bin/security"
+          sec "set-key-partition-list -S apple-tool:,apple:,codesign: -s -k $(q "$keychain_pw") $(q "$keychain")" >/dev/null
+          rm -f "$dir/cert.p12"
+          search=("$keychain")
+          while IFS= read -r k; do
+            k=$(sed -E 's/^[[:space:]]*"(.*)"[[:space:]]*$/\1/' <<<"$k"); [[ -n "$k" ]] && search+=("$k")
+          done < <(security list-keychains -d user)
+          security list-keychains -d user -s "${search[@]}"
+          identity=$(security find-identity -v -p codesigning "$keychain" | sed -nE 's/.*"(Developer ID Application: [^"]+)".*/\1/p' | head -n1)
+          [[ -n "$identity" ]] || { echo "::error::No 'Developer ID Application' identity in MACOS_CERT_P12_BASE64"; exit 1; }
+          echo "SIGN_IDENTITY=$identity" >> "$GITHUB_ENV"
+
+      - name: Write the App Store Connect API key
+        env:
+          NOTARY_API_KEY_P8_BASE64: ${{ secrets.NOTARY_API_KEY_P8_BASE64 }}
+        run: |
+          set -euo pipefail
+          umask 077
+          printf '%s' "$NOTARY_API_KEY_P8_BASE64" | base64 --decode > "$SECRETS_DIR/AuthKey.p8"
+          echo "NOTARY_KEY_PATH=$SECRETS_DIR/AuthKey.p8" >> "$GITHUB_ENV"
+
+      - name: Sign, notarize, staple, DMG + ZIP + SHA-256
+        env:
+          NOTARY_KEY_ID: ${{ secrets.NOTARY_API_KEY_ID }}
+          NOTARY_ISSUER: ${{ secrets.NOTARY_API_ISSUER_ID }}
+          ENTITLEMENTS: ""
+        run: tools/package_macos.sh "$BUILT_APP" --notarize
+
+      - name: Check the stapled DMG
+        run: |
+          set -euo pipefail
+          for f in dist/*.dmg; do
+            xcrun stapler validate "$f"
+            spctl --assess --type open --context context:primary-signature -vvv "$f"
+          done
+
+      - name: Upload
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-dist
+          path: |
+            dist/*.dmg
+            dist/*.zip
+            dist/*.sha256
+          if-no-files-found: error
+          retention-days: 30
+          overwrite: true
+
+      - name: Remove keychain and key files
+        if: always()
+        run: |
+          [[ -n "${SIGN_KEYCHAIN:-}" ]] && security delete-keychain "$SIGN_KEYCHAIN" || true
+          [[ -n "${SECRETS_DIR:-}" ]] && rm -rf "$SECRETS_DIR" || true
+
+  draft:
+    # Creates the release as a draft or replaces the files of an existing draft (re-run).
+    # A published release is never touched.
+    name: GitHub Release (draft)
+    needs: [build]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: CHANGELOG.md
+          sparse-checkout-cone-mode: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-dist
+          path: dist
+      - name: Release notes from CHANGELOG.md
+        # Section "## [X.Y.Z] ..." up to the next "## [" (Keep a Changelog).
+        run: |
+          set -euo pipefail
+          v="${GITHUB_REF_NAME#v}"
+          awk -v v="$v" 'index($0, "## [" v "]") == 1 { f = 1; next } f && /^## \[/ { exit } f && /^\[[^]]+\]: http/ { next } f { print }' \
+            CHANGELOG.md | sed -e '/./,$!d' > "$RUNNER_TEMP/notes.md"
+          [[ -s "$RUNNER_TEMP/notes.md" ]] || { echo "::error::CHANGELOG.md has no section \"## [$v]\""; exit 1; }
+      - name: Create or update the draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          v="${GITHUB_REF_NAME#v}"
+          cd dist
+          sha256sum -c ./*.sha256
+          files=("$APP_NAME-$v.dmg" "$APP_NAME-$v.zip" "$APP_NAME-$v.dmg.sha256" "$APP_NAME-$v.zip.sha256")
+          if state=$(gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft 2>/dev/null); then
+            [[ "$state" == true ]] || { echo "::error::$GITHUB_REF_NAME is already published - tag a new version"; exit 1; }
+            gh release upload "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --clobber "${files[@]}"
+            gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --notes-file "$RUNNER_TEMP/notes.md"
+          else
+            gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft --verify-tag \
+              --title "$APP_NAME $v" --notes-file "$RUNNER_TEMP/notes.md" "${files[@]}"
+          fi
+
+
+  publish:
+    name: Publish release
+    needs: [draft]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    environment: release        # last approval before the release is public
+    permissions:
+      contents: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false
+
+  homebrew-tap:
+    # version + sha256 of Casks/<token>.rb in the tap, from the PUBLISHED release. Without the
+    # secret: a notice, nothing fails. Never downgrades.
+    name: Homebrew tap
+    needs: [publish]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    environment: release
+    concurrency:
+      group: release-homebrew-tap
+      cancel-in-progress: false
+    timeout-minutes: 15
+    steps:
+      - name: Update the cask
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAP_DEPLOY_KEY: ${{ secrets.HOMEBREW_TAP_DEPLOY_KEY }}
+          TAP_REPO: brokoskokoli/homebrew-tap
+          CASK: altswitch
+        run: |
+          set -euo pipefail
+          if [[ -z "$TAP_DEPLOY_KEY" ]]; then
+            echo "::notice title=Homebrew tap not updated::Secret HOMEBREW_TAP_DEPLOY_KEY is missing"; exit 0
+          fi
+          v="${GITHUB_REF_NAME#v}"
+          work=$(mktemp -d "$RUNNER_TEMP/tap.XXXXXX")
+          gh release download "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --dir "$work/dl" \
+            --pattern "$APP_NAME-$v.dmg" --pattern "$APP_NAME-$v.dmg.sha256"
+          (cd "$work/dl" && sha256sum -c "$APP_NAME-$v.dmg.sha256")
+          sha=$(cut -d ' ' -f 1 "$work/dl/$APP_NAME-$v.dmg.sha256")
+          [[ "$sha" =~ ^[0-9a-f]{64}$ ]] || { echo "::error::unexpected checksum file"; exit 1; }
+          umask 077
+          ssh_dir=$(mktemp -d "$RUNNER_TEMP/tapssh.XXXXXX"); trap 'rm -rf -- "$ssh_dir"' EXIT
+          printf '%s\n' "$TAP_DEPLOY_KEY" > "$ssh_dir/key"
+          # GitHub's published ed25519 host key (docs.github.com → GitHub's SSH key fingerprints).
+          echo 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' > "$ssh_dir/known_hosts"
+          export GIT_SSH_COMMAND="ssh -i $ssh_dir/key -o IdentitiesOnly=yes -o UserKnownHostsFile=$ssh_dir/known_hosts -o StrictHostKeyChecking=yes"
+          git clone --quiet "git@github.com:$TAP_REPO.git" "$work/tap"
+          git -C "$work/tap" config user.name "github-actions[bot]"
+          git -C "$work/tap" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cask="$work/tap/Casks/$CASK.rb"
+          if [[ ! -f "$cask" ]]; then
+            echo "::notice title=Homebrew tap not updated::$TAP_REPO has no Casks/$CASK.rb yet - add it once by hand (version $v, sha256 $sha), later releases update it"
+            exit 0
+          fi
+          old=$(sed -nE 's/^  version "([^"]+)"$/\1/p' "$cask")
+          if [[ "$old" == "$v" ]] && grep -qx "  sha256 \"$sha\"" "$cask"; then echo "Tap already at $v"; exit 0; fi
+          if [[ "$old" != "$v" && "$(printf '%s\n%s\n' "$old" "$v" | sort -V | tail -n1)" != "$v" ]]; then
+            echo "::notice::Tap has the newer version $old - not downgraded"; exit 0
+          fi
+          sed -i -E -e "s/^  version \"[^\"]+\"$/  version \"$v\"/" -e "s/^  sha256 \"[0-9a-f]{64}\"$/  sha256 \"$sha\"/" "$cask"
+          if ! grep -qx "  version \"$v\"" "$cask" || ! grep -qx "  sha256 \"$sha\"" "$cask"; then
+            echo "::error::could not update version/sha256 (unexpected layout)"; exit 1
+          fi
+          git -C "$work/tap" commit --quiet -am "$CASK $v"
+          for attempt in 1 2 3; do
+            git -C "$work/tap" push --quiet origin HEAD && { echo "Tap updated: $CASK $v"; exit 0; }
+            sleep $((attempt * 5)); git -C "$work/tap" pull --quiet --rebase
+          done
+          echo "::error::push to $TAP_REPO failed"; exit 1
