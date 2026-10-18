@@ -19,10 +19,11 @@ private let dynamicCGWindowListCreateImage: CGWindowListCreateImageFunc? = {
 }()
 
 // Private but long-stable AX call (used by AltTab, yabai …): CGWindowID of an AX window. Needed to
-// find a minimized window's cached thumbnail, since minimized windows are not in the on-screen list.
-private typealias AXUIElementGetWindowFunc = @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) -> AXError
+// find a minimized window's cached thumbnail, since minimized windows are not in the on-screen list,
+// and to record which window got focus (WindowOrderTracker).
+typealias AXUIElementGetWindowFunc = @convention(c) (AXUIElement, UnsafeMutablePointer<CGWindowID>) -> AXError
 
-private let dynamicAXUIElementGetWindow: AXUIElementGetWindowFunc? = {
+let dynamicAXUIElementGetWindow: AXUIElementGetWindowFunc? = {
     guard let sym = dlsym(dlopen(nil, RTLD_LAZY), "_AXUIElementGetWindow") else {
         return nil
     }
@@ -268,7 +269,11 @@ public class WindowManager {
 
         // One card per window, even if a window shows up in both lists
         var seen = Set<CGWindowID>()
-        return results.filter { seen.insert($0.id).inserted }
+        let unique = results.filter { seen.insert($0.id).inserted }
+
+        // Screen stacking order groups windows by app (activating an app raises all its windows):
+        // order by when each window last had focus instead
+        return WindowOrderTracker.shared.sortedByRecentUse(unique)
     }
 
     /// Loads fresh window thumbnails asynchronously without blocking the main run loop. Minimized
@@ -465,6 +470,7 @@ public class WindowManager {
 
                 // Raise window to the front and make main
                 AXUIElementPerformAction(target, kAXRaiseAction as CFString)
+                WindowOrderTracker.shared.noteFocused(window: target)
                 AXUIElementSetAttributeValue(target, kAXMainAttribute as CFString, kCFBooleanTrue)
             }
         }

@@ -56,6 +56,9 @@ public class AppDelegate: NSObject, NSApplicationDelegate, HotkeyManagerDelegate
         // Keep recent window images so minimized windows still get a preview
         WindowManager.shared.startThumbnailCaching()
 
+        // Order windows by last focus, not by the stacking order on screen
+        WindowOrderTracker.shared.start()
+
         // Pay the first-use costs now instead of on the first shortcut press
         WindowManager.shared.warmUp()
         panel.prewarm()

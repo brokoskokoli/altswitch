@@ -6,6 +6,11 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- **Window order:** windows are listed by when you last used them, like Alt-Tab on Windows.
+  Before, all windows of an app came first as a group as soon as you switched to that app,
+  because macOS raises all of them together.
+
 ## [1.1.1] - 2026-10-19
 
 ### Changed
