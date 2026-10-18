@@ -133,8 +133,14 @@ except Exception: print("")' <<<"$out")
     die "notarization of $(basename "$target") failed"
   fi
   rm -f "$WORK/notarize-upload.zip"
-  xcrun stapler staple "$target"
-  xcrun stapler validate "$target"
+  # The ticket can take a moment to appear and the runners' network drops now and then: retry.
+  local attempt
+  for attempt in 1 2 3 4 5; do
+    xcrun stapler staple "$target" && xcrun stapler validate "$target" && return 0
+    (( attempt < 5 )) || die "stapling $(basename "$target") failed"
+    echo "stapler failed, retrying in $((attempt * 15))s"
+    sleep $((attempt * 15))
+  done
 }
 
 if [[ $NOTARIZE == 1 ]]; then
