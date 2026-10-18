@@ -181,7 +181,7 @@ public class WindowManager {
                 axWindowsCache[pid] = axWindows
             }
 
-            for (idx, axWin) in axWindows.enumerated() {
+            for axWin in axWindows {
                 var minVal: AnyObject?
                 if AXUIElementCopyAttributeValue(axWin, kAXMinimizedAttribute as CFString, &minVal) == .success,
                    let isMin = minVal as? Bool, isMin {
@@ -214,8 +214,9 @@ public class WindowManager {
                        getWindow(axWin, &realWid) == .success, realWid != 0 {
                         // Real ID: lets the cached thumbnail from before minimizing be found
                     } else {
+                        // Plain counter: OR-ing in pid and index made different windows share an ID
                         syntheticIdCounter += 1
-                        realWid = CGWindowID(syntheticIdCounter | (UInt32(pid) << 8) | UInt32(idx & 0xFF))
+                        realWid = CGWindowID(syntheticIdCounter)
                     }
 
                     let item = WindowItem(

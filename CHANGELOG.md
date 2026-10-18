@@ -8,7 +8,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 - **Highlight:** every selected card is highlighted while you step through with Tab. Before, some
-  cards stayed without the blue frame although the counter moved on.
+  cards stayed without the blue frame although the counter moved on. Several minimized windows of
+  one app could get the same internal ID, which caused this.
 
 ## [1.0.2] - 2026-10-18
 
