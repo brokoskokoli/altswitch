@@ -1,206 +1,119 @@
-# AltSwitch 🪟
+<!-- SPDX-License-Identifier: MIT -->
+**English** · [Deutsch](README.de.md)
 
-<p align="center">
-  <img src="Resources/AppIcon.icns" alt="AltSwitch App Icon" width="128" height="128">
-</p>
+<div align="center">
 
-<p align="center">
-  <strong>Der moderne, native Windows-Style Fenster-Umschalter für macOS in Swift & SwiftUI.</strong><br>
-  Wechsle zwischen <em>einzelnen Fenstern</em> statt nur Programmen – blitzschnell, mit Live-Vorschau und Tastatur- oder Mauskontrolle.
-</p>
+<img src="packaging/brand/icon-1024.png" width="128" height="128" alt="AltSwitch app icon">
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Platform-macOS%2013%2B%20%28Ventura%2C%20Sonoma%2C%20Sequoia%29-blue?logo=apple" alt="macOS 13+">
-  <img src="https://img.shields.io/badge/Swift-5.9%2B-F05138?logo=swift&logoColor=white" alt="Swift 5.9+">
-  <img src="https://img.shields.io/badge/Architecture-Universal%20%28Apple%20Silicon%20%2F%20Intel%29-success" alt="Universal">
-  <img src="https://img.shields.io/badge/License-MIT-lightgrey" alt="License MIT">
-  <img src="https://img.shields.io/badge/Privacy-100%25%20Offline%20%26%20Local-brightgreen" alt="100% Offline">
-</p>
+# AltSwitch
 
----
+**Windows-style Alt-Tab for your Mac: switch between windows, not just apps.**
 
-## 💡 Warum AltSwitch?
+[![CI](https://github.com/brokoskokoli/altswitch/actions/workflows/ci.yml/badge.svg)](https://github.com/brokoskokoli/altswitch/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/brokoskokoli/altswitch?sort=semver)](https://github.com/brokoskokoli/altswitch/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Platform: macOS 13+](https://img.shields.io/badge/platform-macOS%2013%2B-lightgrey.svg)](#install)
+[![Universal: Apple silicon + Intel](https://img.shields.io/badge/universal-Apple%20silicon%20%2B%20Intel-lightgrey.svg)](#install)
+[![Homebrew: brokoskokoli/tap](https://img.shields.io/badge/homebrew-brokoskokoli%2Ftap-orange.svg)](https://github.com/brokoskokoli/homebrew-tap)
 
-Auf macOS wechselt das klassische `⌘-Tab` standardmäßig nur zwischen **Programmen**, nicht zwischen einzelnen Fenstern. Wenn du mehrere Browser-Fenster, Dokumente oder Terminal-Sessions geöffnet hast, musst du dich umständlich mit Mission Control oder `⌘-<` behelfen.
+<img src="website/images/social-preview.png" width="820" alt="AltSwitch: Windows-style Alt-Tab for your Mac. Switch windows, not just apps.">
 
-**AltSwitch bringt den schnellen und beliebten Windows-Style Alt-Tab Switcher auf den Mac:**
-- Jedes offene Fenster aller laufenden Programme wird als **eigenständige Vorschau-Karte** angezeigt.
-- Echte **Z-Order (Most Recently Used / MRU)** Erkennung: Das zuletzt genutzte Fenster wird beim ersten Tastendruck sofort vorausgewählt.
-- **Zwei umschaltbare Layouts**: Kompaktes Karussell oder bildschirmfüllende Raster-Übersicht (Task View) für alle Fenster.
-- **Sofortige Klick-Aktivierung**: Kein Doppelklick nötig – dank nativer `acceptsFirstMouse`-Unterstützung aktiviert der erste Mausklick sofort das Zielfenster.
-- **100% nativ**: Geschrieben in modernem Swift, AppKit & SwiftUI – ohne Electron, ohne Framework-Ballast, ressourcenschonend und extrem performant.
+[![Download for macOS](https://img.shields.io/badge/Download_for_macOS-latest_release-2F6FE0?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/brokoskokoli/altswitch/releases/latest)
 
----
+</div>
 
-## ✨ Hauptfunktionen
+## Why AltSwitch?
 
-### 1. 🪟 Windows-Style Fenster-Navigation
-- Zeigt **alle aktiven Fenster** aller laufenden Anwendungen (Finder, Browser, IDEs, Terminals, Notizen etc.) in chronologischer Nutzungsreihenfolge (MRU Z-Order).
-- Erkennt minimierte Fenster und kennzeichnet sie mit einem dezenten Badge.
-- Beim Loslassen der Hotkey-Taste (`⌥` oder `⌘`) wird das ausgewählte Fenster sofort in den Vordergrund geholt.
+On a Mac, `⌘-Tab` switches between **apps**. With three browser windows, two documents and a few
+terminals open, you end up in Mission Control or pressing `⌘-<` until the right window shows up.
 
-### 2. 📐 Zwei Layout-Modi
-Du kannst das Erscheinungsbild nach deinen Wünschen anpassen:
-- **Kompakt (Fokus)**:
-  - Horizontales Karussell mit automatischem Zentrieren des aktiven Elements.
-  - Ideal für den schnellen, fokussierten Wechsel zwischen den letzten Fenstern.
-- **Alle Fenster (Raster-Übersicht / Task View)**:
-  - Dynamisches Multi-Column Raster, das sich flexibel bis zu **88% Bildschirmbreite** und **80% Bildschirmhöhe** ausdehnt.
-  - Zeigt alle Fenster auf einen Blick ohne horizontales Scrollen – wie die Task View in Windows 10/11.
-  - Unterstützt 2D-Navigation mit den Pfeiltasten (`←`, `↑`, `→`, `↓`).
+AltSwitch works like Alt-Tab on Windows: **every window of every app is its own card with a live
+preview**, in the order you last used them. Hold the modifier, tap Tab, let go – you are in the
+window you wanted.
 
-### 3. 🖱️ Sofortige Mausklick-Aktivierung (`acceptsFirstMouse`)
-- Durch eine spezialisierte `ClickableHostingView` reagiert jede Fensterkarte unmittelbar auf den **ersten Mausklick**.
-- Auch wenn das Overlay als schwebendes, nicht-aktivierendes Panel angezeigt wird, ist kein Vorfokussieren oder Doppelklick erforderlich.
-- Hover-Effekte heben das überfahrene Fenster optisch hervor.
+## Features
 
-### 4. 🔄 Flexible Tasten- & Rückwärtsnavigation
-- **Vorwärts**: `Tab` oder `→` bzw. `↓`.
-- **Rückwärts**:
-  - `⇧⇥` (Shift + Tab) bei gehaltenem Modifier (`⌥` oder `⌘`).
-  - **Shift-Tap**: Drücke oder tippe einfach kurz `Shift`, während das Overlay aktiv ist, um einen Schritt zurückzugehen!
-  - `←` bzw. `↑` für Richtungsnavigation.
-- **Abbrechen**: `Escape` schließt das Overlay sofort, ohne den Fokus zu ändern.
-- **Bestätigen**: `Enter`, `Leertaste` oder Loslassen der Auslösetaste.
+- **Every window, not every app** – each open window gets its own card with app icon, title and
+  live preview.
+- **Most recently used order** – the first Tab selects the window you used before the current one.
+- **Two layouts** – a compact carousel for quick switching, or a grid of all windows (like Task
+  View on Windows) with arrow-key navigation in both directions.
+- **Your shortcut** – `⌥-Tab` (Option-Tab) or `⌘-Tab` (replaces the app switcher), set in the menu.
+- **Keyboard or mouse** – `⇧-Tab` or a tap on Shift goes back, `Esc` cancels, a single click
+  activates a card.
+- **Minimized windows** included, marked with a badge, restored when you pick them.
+- **Menu bar app** – no Dock icon, a setup assistant for the macOS permissions, optional start at
+  login.
+- **Native and light** – Swift, AppKit and SwiftUI, no Electron.
+- **Private** – no network connections at all, no telemetry, no account.
+- **Free and open source** – MIT licence.
 
-### 5. 📸 Live-Vorschau mit ScreenCaptureKit
-- Rendert flüssige, hochauflösende Screenshots aller Fenster im Hintergrund.
-- Automatischer Fallback mit App-Icon und Hinweisen, falls die Bildschirmaufnahme-Berechtigung noch nicht gewährt wurde.
+## Install
 
-### 6. ⚙️ Menüleiste & Einrichtungs-Assistent
-- Läuft als reiner Menüleisten-Agent (`LSUIElement=true`, kein störendes Dock-Icon).
-- Komfortabler **Einrichtungs-Assistent** mit Live-Erkennung von macOS-Berechtigungen.
-- Schnelleinstellungen direkt im Menüleisten-Menü:
-  - Tastenkombination: `⌥ Option + Tab` oder `⌘ Command + Tab`.
-  - Layout: `Kompakt (Fokus)` oder `Alle Fenster (Raster-Übersicht)`.
-  - Autostart beim Anmelden (`SMAppService`).
+Requirements: **macOS 13 Ventura or later**, Apple silicon or Intel (universal app).
 
----
+- **Homebrew:**
 
-## ⌨️ Tastaturkürzel & Steuerung
+  ```sh
+  brew install --cask brokoskokoli/tap/altswitch
+  ```
 
-| Aktion | Tastenkürzel | Beschreibung |
-| :--- | :--- | :--- |
-| **Switcher öffnen & Vorwärts** | `⌥ + ⇥` oder `⌘ + ⇥` | Öffnet das Overlay und wählt das vorherige aktive Fenster aus. |
-| **Vorwärts blättern** | `⇥` (halten + wiederholt Tab) | Springt zum nächsten Fenster in der Z-Order. |
-| **Rückwärts blättern** | `⇧ + ⇥` (Shift + Tab) | Springt einen Schritt zurück in der Liste. |
-| **Schnell-Rückschritt** | `⇧` (Shift antippen) | Geht beim Drücken von Shift sofort einen Schritt zurück. |
-| **Pfeilnavigation** | `←` / `→` / `↑` / `↓` | Navigiert frei im Karussell bzw. im 2D-Raster. |
-| **Fenster aktivieren** | Modifier loslassen oder `↵` / `Space` | Schließt das Overlay und bringt das gewählte Fenster nach vorne. |
-| **Fenster per Klick aktivieren**| Mausklick | Aktiviert das angeklickte Fenster sofort. |
-| **Abbrechen** | `Esc` | Schließt das Overlay ohne Fensterwechsel. |
+  Updates: `brew upgrade --cask altswitch`.
 
----
+- **Download:** get `AltSwitch-<version>.dmg` from the
+  [latest release](https://github.com/brokoskokoli/altswitch/releases/latest), open it and drag
+  AltSwitch into *Applications*. Releases are signed with a Developer ID and notarized by Apple.
 
-## 🚀 Installation & Erste Schritte
+On first launch the setup assistant asks for two permissions in *System Settings → Privacy &
+Security*:
 
-### Option 1: Homebrew
+| Permission | Why | Required |
+|---|---|---|
+| **Accessibility** | catch the shortcut, focus and raise the chosen window | yes |
+| **Screen Recording** | window previews on the cards | no – without it the cards show the app icon |
 
-```bash
-brew install --cask brokoskokoli/tap/altswitch
-```
+**Uninstall:** quit AltSwitch from the menu bar and delete it from *Applications*
+(`brew uninstall --cask --zap altswitch` also removes the settings).
 
-### Option 2: Fertiges Release herunterladen
-1. Lade das neueste Release (`.dmg` oder `.zip`) von [GitHub Releases](https://github.com/brokoskokoli/altswitch/releases) herunter.
-2. Öffne die `.dmg` und ziehe **AltSwitch** in deinen `Programme` (`/Applications`) Ordner.
-3. Starte AltSwitch. Beim ersten Start führt dich der integrierte Einrichtungs-Assistent durch die beiden benötigten macOS-Berechtigungen.
+## Keyboard shortcuts
 
-### Option 3: Aus dem Quellcode bauen
-Voraussetzungen:
-- macOS 13.0 oder neuer
-- Xcode Command Line Tools (`xcode-select --install`)
+| Action | Keys |
+|---|---|
+| Open the switcher, next window | `⌥-Tab` or `⌘-Tab` |
+| Next / previous | `Tab` / `⇧-Tab`, or tap `⇧` |
+| Move in carousel or grid | `←` `→` `↑` `↓` |
+| Switch to the selected window | release the modifier, `Return` or `Space` |
+| Switch by mouse | click a card |
+| Cancel | `Esc` |
 
-```bash
-# Repository klonen
+## Build from source
+
+Requires the Xcode Command Line Tools (`xcode-select --install`).
+
+```sh
 git clone https://github.com/brokoskokoli/altswitch.git
 cd altswitch
-
-# Kompilieren und App-Bundle erzeugen
-./build.sh
-# oder
-make
-
-# AltSwitch starten
+./build.sh                 # universal build → .build/AltSwitch.app
 open .build/AltSwitch.app
 ```
 
----
+`ARCHS=arm64 ./build.sh` builds only for Apple silicon (faster). Local builds are signed ad hoc;
+macOS asks for the permissions again for such a build.
 
-## 🔒 Erforderliche macOS-Berechtigungen
+## Privacy
 
-AltSwitch benötigt zwei Standard-Systemberechtigungen von macOS:
+AltSwitch makes **no network connections** – no update check, no analytics, no crash reporter.
+Window previews stay in memory and are never written to disk. The only stored data are your
+settings in `~/Library/Preferences/com.stefanrichter.altswitch.plist`. Details on the
+[privacy page](https://brokoskokoli.github.io/altswitch/privacy.html).
 
-1. **Bedienungshilfen (Accessibility / Steuerung des Computers)**:
-   - *Zweck*: Globaler `CGEventTap` zum Abfangen von `⌥-Tab` / `⌘-Tab` sowie das gezielte Anheben und Fokussieren einzelner Fenster über die `AXUIElement`-API.
-   - *Einstellung*: `Systemeinstellungen` → `Datenschutz & Sicherheit` → `Bedienungshilfen`.
-2. **Bildschirmaufnahme (Screen Recording)**:
-   - *Zweck*: Erstellung der Live-Vorschau-Thumbnails für die Fensterkarten.
-   - *Hinweis*: Fehlt diese Berechtigung, funktioniert AltSwitch dennoch vollumfänglich – es werden statt Live-Bildern elegante Platzhalter mit App-Icon angezeigt.
-   - *Einstellung*: `Systemeinstellungen` → `Datenschutz & Sicherheit` → `Bildschirmaufnahme`.
+## Contributing
 
-> [!NOTE]
-> **Datenschutz garantiert**: AltSwitch sendet keinerlei Daten, nutzt keine Analytics und besitzt keinen Netzwerkzugriff. Alle Operationen finden zu 100% lokal im RAM deines Macs statt.
+Bug reports, ideas and pull requests are welcome – see [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[Code of Conduct](CODE_OF_CONDUCT.md). Please report security issues privately as described in
+[SECURITY.md](SECURITY.md). Releases are documented in [CHANGELOG.md](CHANGELOG.md), the release
+process in [docs/RELEASING.md](docs/RELEASING.md).
 
----
+## License
 
-## 🏗️ Architektur & Technologie-Stack
-
-AltSwitch ist strikt modular aufgebaut und nutzt die modernsten Apple-Frameworks:
-
-```
-altswitch/
-├── Sources/
-│   └── AltSwitch/
-│       ├── App/
-│       │   ├── AppDelegate.swift         # Lifecycle, Koordination von Overlay & Statusleiste
-│       │   └── main.swift                # App-Einstiegspunkt (@main)
-│       ├── Models/
-│       │   ├── WindowItem.swift          # Datenmodell für Fenster (ID, Titel, Bounds, Thumbnails)
-│       │   └── AppSettings.swift         # Persistente Konfiguration (ShortcutMode, SwitcherLayout)
-│       ├── Services/
-│       │   ├── WindowManager.swift       # MRU Z-Order Fenster-Enumeration, Thumbnail-Laden & AX-Aktivierung
-│       │   ├── HotkeyManager.swift       # Globaler CGEventTap mit Modifier-Tracking & Shift-Erkennung
-│       │   ├── PermissionsManager.swift  # Statusprüfung & Deep-Links in Systemeinstellungen
-│       │   └── AutostartManager.swift    # SMAppService Integration für System-Login
-│       └── UI/
-│           ├── ClickableHostingView      # NSHostingView mit acceptsFirstMouse = true
-│           ├── OverlayPanel.swift        # NSPanel (.screenSaver level) mit dynamischer Größenberechnung
-│           ├── OverlayView.swift         # SwiftUI Overlay: LazyVGrid (Grid) & ScrollView (Kompakt)
-│           ├── WindowCardView.swift      # Fensterkarte mit Hover, Selektionsrahmen und Bildvorschau
-│           ├── StatusBarController.swift # Menüleisten-Steuerung (NSStatusItem)
-│           ├── SetupWindowController.swift# Onboarding-Fenster
-│           └── SetupView.swift           # SwiftUI Einrichtungs-Assistent
-├── Resources/
-│   ├── Info.plist                        # LSUIElement=true, Permissions Usage Descriptions
-│   └── AppIcon.icns                      # Offizielles AltSwitch Icon
-├── tools/
-│   ├── setup_release_secrets.sh          # Einmalig: Release-Secrets interaktiv einrichten
-│   └── package_macos.sh                  # Signieren, notarisieren, DMG/ZIP
-├── .github/workflows/
-│   └── release.yml                       # Automatische GitHub Actions Release Pipeline
-├── build.sh                              # High-Performance Swift Build & Packaging Skript
-└── Makefile                              # Build Automatisierung (build, run, clean)
-```
-
----
-
-## 🚢 Releases
-
-Releases entstehen per Tag `vX.Y.Z` über GitHub Actions: Universal-Build, Signatur mit Developer ID
-und Hardened Runtime, Apple-Notarisierung, DMG/ZIP mit SHA-256, Release-Text aus dem
-[CHANGELOG](CHANGELOG.md), anschließend Update des Homebrew-Casks. Jeder Schritt mit Secrets
-wartet auf eine Freigabe im GitHub-Environment `release`.
-
-Ablauf, Secrets und Notfallweg: [docs/RELEASING.md](docs/RELEASING.md).
-
----
-
-## 🏷️ Tags & Keywords
-
-`alt-tab` • `macos-window-switcher` • `task-view` • `window-manager` • `swift` • `swiftui` • `appkit` • `screencapturekit` • `macos-utility` • `accessibility` • `productivity` • `windows-alt-tab-for-mac` • `alt-tab-replacement` • `macos-sequoia` • `macos-sonoma`
-
----
-
-## 📄 Lizenz
-
-Dieses Projekt ist unter der **MIT Lizenz** lizenziert – freie Nutzung, Anpassung und Weitergabe für jedermann. Details siehe [LICENSE](LICENSE).
+[MIT](LICENSE) © 2026 brokoskokoli and contributors.

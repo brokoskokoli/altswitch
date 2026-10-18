@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: MIT
+# Builds the universal app on every push to main and every pull request (no signing, no secrets).
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build (universal)
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build
+        run: |
+          set -euo pipefail
+          ./build.sh
+          lipo .build/AltSwitch.app/Contents/MacOS/AltSwitch -verify_arch arm64 x86_64

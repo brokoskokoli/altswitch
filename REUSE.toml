@@ -1,0 +1,22 @@
+version = 1
+SPDX-PackageName = "AltSwitch"
+SPDX-PackageDownloadLocation = "https://github.com/brokoskokoli/altswitch"
+
+# Licensing per REUSE (https://reuse.software), checked in CI with `reuse lint`.
+# Source files carry their own "SPDX-License-Identifier" line; this file adds the copyright
+# notice for everything and the licence for files that cannot hold a comment (JSON, images,
+# binary test data). Licence texts live in LICENSES/ (`reuse download --all`).
+
+[[annotations]]
+path = "**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 brokoskokoli and the AltSwitch contributors"
+SPDX-License-Identifier = "MIT"
+
+# The Code of Conduct is the Contributor Covenant 2.1 (CC-BY-4.0); only the contact paragraph
+# under "Enforcement" is adapted.
+[[annotations]]
+path = "CODE_OF_CONDUCT.md"
+precedence = "override"
+SPDX-FileCopyrightText = "2014-2021 Coraline Ada Ehmke and the Contributor Covenant contributors"
+SPDX-License-Identifier = "CC-BY-4.0"

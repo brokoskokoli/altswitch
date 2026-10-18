@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
 # One-time setup of everything the release workflow needs (interactive, on your own Mac):
 #
 #   tools/setup_release_secrets.sh

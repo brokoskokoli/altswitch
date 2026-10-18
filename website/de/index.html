@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: MIT -->
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AltSwitch – Alt-Tab-Fensterumschalter für den Mac</title>
+<meta name="description" content="AltSwitch ist ein kostenloser Open-Source-Fensterumschalter für macOS: Alt-Tab wie unter Windows, mit Live-Vorschau jedes Fensters und Rasteransicht.">
+<link rel="canonical" href="https://brokoskokoli.github.io/altswitch/de/">
+<link rel="alternate" hreflang="en" href="https://brokoskokoli.github.io/altswitch/">
+<link rel="alternate" hreflang="de" href="https://brokoskokoli.github.io/altswitch/de/">
+<link rel="alternate" hreflang="x-default" href="https://brokoskokoli.github.io/altswitch/">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f3f5fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d1324" media="(prefers-color-scheme: dark)">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AltSwitch">
+<meta property="og:locale" content="de_DE">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:title" content="AltSwitch – Alt-Tab-Fensterumschalter für den Mac">
+<meta property="og:description" content="Alt-Tab wie unter Windows – für deinen Mac. Wechsle Fenster, nicht nur Programme. Kostenlos und Open Source.">
+<meta property="og:url" content="https://brokoskokoli.github.io/altswitch/de/">
+<meta property="og:image" content="https://brokoskokoli.github.io/altswitch/images/social-preview.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta property="og:image:alt" content="App-Icon und Name von AltSwitch mit dem Slogan: Windows-style Alt-Tab for your Mac">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="AltSwitch – Alt-Tab-Fensterumschalter für den Mac">
+<meta name="twitter:description" content="Alt-Tab wie unter Windows – für deinen Mac. Wechsle Fenster, nicht nur Programme. Kostenlos und Open Source.">
+<meta name="twitter:image" content="https://brokoskokoli.github.io/altswitch/images/social-preview.png">
+<meta name="twitter:image:alt" content="App-Icon und Name von AltSwitch mit dem Slogan: Windows-style Alt-Tab for your Mac">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "AltSwitch",
+  "inLanguage": "de",
+  "operatingSystem": "macOS 13 oder neuer",
+  "applicationCategory": "UtilitiesApplication",
+  "description": "Kostenloser Open-Source-Fensterumschalter für macOS: Alt-Tab wie unter Windows, mit Live-Vorschau jedes Fensters, Rasteransicht und Tastatur oder Maus.",
+  "url": "https://brokoskokoli.github.io/altswitch/de/",
+  "downloadUrl": "https://github.com/brokoskokoli/altswitch/releases/latest",
+  "installUrl": "https://github.com/brokoskokoli/altswitch/releases/latest",
+  "screenshot": "https://brokoskokoli.github.io/altswitch/images/social-preview.png",
+  "license": "https://opensource.org/licenses/MIT",
+  "isAccessibleForFree": true,
+  "author": { "@type": "Person", "name": "brokoskokoli", "url": "https://github.com/brokoskokoli" },
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+}
+</script>
+
+<style>
+  /* Brand colours from the app icon: navy surface, glowing blue window frame. */
+  :root {
+    --bg: #f3f5fb;
+    --bg-alt: #ffffff;
+    --text: #121a33;
+    --muted: #4a5470;
+    --border: #dde2ef;
+    --accent: #2457c5;
+    --accent-2: #0b6f94;
+    --accent-text: #ffffff;
+    --yes: #137852;
+    --no: #66708a;
+    --shadow: 0 24px 60px rgba(18, 26, 51, .16);
+    --bar: #e9edf7;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1324;
+      --bg-alt: #171e35;
+      --text: #e8ecf8;
+      --muted: #a3acc6;
+      --border: #263253;
+      --accent: #6ea4ff;
+      --accent-2: #6fd6ff;
+      --accent-text: #0b1226;
+      --yes: #4fd39f;
+      --no: #7c86a3;
+      --shadow: 0 24px 60px rgba(0, 0, 0, .55);
+      --bar: #1c2440;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 17px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+
+  header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 0; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; color: var(--text); }
+  .brand img { width: 32px; height: 32px; }
+  nav a { margin-left: 20px; color: var(--muted); font-size: 15px; }
+
+  .hero { text-align: center; padding: 40px 0 16px; }
+  .hero img.icon { width: 112px; height: 112px; }
+  h1 { font-size: clamp(36px, 6vw, 56px); line-height: 1.1; margin: 14px 0 12px; letter-spacing: -.02em; }
+  .tagline { font-size: clamp(22px, 3.4vw, 30px); font-weight: 650; line-height: 1.25; margin: 0 auto 14px; max-width: 760px; letter-spacing: -.01em; }
+  .tagline span { background: linear-gradient(90deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .subtitle { font-size: clamp(17px, 2.2vw, 20px); color: var(--muted); max-width: 720px; margin: 0 auto 28px; }
+  .buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn { display: inline-block; padding: 12px 22px; border-radius: 12px; font-weight: 600; border: 1px solid var(--border); color: var(--text); background: var(--bg-alt); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  .btn:hover { text-decoration: none; filter: brightness(1.06); }
+  .meta { color: var(--muted); font-size: 14px; margin-top: 12px; }
+
+  section { padding: 64px 0 8px; }
+  h2 { font-size: clamp(26px, 3.6vw, 34px); letter-spacing: -.01em; margin: 0 0 12px; text-align: center; }
+  .lead { text-align: center; color: var(--muted); max-width: 720px; margin: 0 auto 28px; }
+
+  .compare { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--bg-alt); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; font-size: 16px; }
+  .compare th, .compare td { padding: 12px 16px; border-bottom: 1px solid var(--border); text-align: left; }
+  .compare tr:last-child td { border-bottom: 0; }
+  .compare th { font-size: 14px; color: var(--muted); font-weight: 600; background: var(--bar); }
+  .compare .c { text-align: center; width: 130px; }
+  .yes { color: var(--yes); font-weight: 700; }
+  .no { color: var(--no); }
+  .note { color: var(--muted); font-size: 14px; margin-top: 10px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 16px; }
+  .card { background: var(--bg-alt); border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+  .card .ico { font-size: 26px; line-height: 1; margin-bottom: 10px; }
+  .card h3 { margin: 0 0 6px; font-size: 18px; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+
+  .keys { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 10px 16px; max-width: 900px; margin: 0 auto; }
+  .keys div { display: flex; align-items: center; gap: 10px; background: var(--bg-alt); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; font-size: 15px; }
+  .keys span.k { flex: none; min-width: 74px; }
+  kbd { font: 600 13px/1 ui-monospace, SFMono-Regular, Menlo, monospace; display: inline-block; padding: 4px 7px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 6px; background: var(--bar); color: var(--text); }
+
+  .install ol { padding-left: 22px; }
+  .install li { margin: 6px 0; }
+  .platforms { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 16px; margin-top: 20px; }
+  code { font: 14px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--bg-alt); border: 1px solid var(--border); border-radius: 6px; padding: 1px 6px; overflow-wrap: anywhere; }
+
+  .faq { max-width: 820px; margin: 0 auto; }
+  .faq details { background: var(--bg-alt); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; margin: 10px 0; }
+  .faq summary { cursor: pointer; font-weight: 600; }
+  .faq details p { color: var(--muted); margin: 10px 0 0; }
+
+  footer { color: var(--muted); font-size: 14px; text-align: center; padding: 64px 0 40px; }
+  @media (max-width: 760px) {
+    nav a:not(.gh):not(.lang) { display: none; }
+    nav a { margin-left: 14px; }
+    .compare .c { width: 84px; padding: 10px 6px; }
+    .compare th, .compare td { padding: 10px; font-size: 15px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="./"><img src="../favicon.png" alt="" width="32" height="32">AltSwitch</a>
+    <nav>
+      <a href="#warum">Warum</a>
+      <a href="#funktionen">Funktionen</a>
+      <a href="#tasten">Tasten</a>
+      <a href="#installieren">Installieren</a>
+      <a href="#faq">FAQ</a>
+      <a class="gh" href="https://github.com/brokoskokoli/altswitch">GitHub</a>
+      <a class="lang" href="../" hreflang="en" lang="en">English</a>
+    </nav>
+  </header>
+
+  <main>
+    <div class="hero">
+      <img class="icon" src="../images/icon.png" alt="App-Icon von AltSwitch" width="112" height="112" fetchpriority="high">
+      <h1>AltSwitch</h1>
+      <p class="tagline">Alt-Tab wie unter Windows – für deinen Mac. <span>Wechsle Fenster, nicht nur Programme.</span></p>
+      <p class="subtitle">AltSwitch zeigt jedes offene Fenster aller Programme als Karte mit Live-Vorschau. <kbd>⌥</kbd> oder <kbd>⌘</kbd> halten, <kbd>Tab</kbd> tippen, loslassen – und das gewählte Fenster ist vorn.</p>
+      <div class="buttons">
+        <a class="btn primary" href="https://github.com/brokoskokoli/altswitch/releases/latest">Für macOS laden</a>
+        <a class="btn" href="https://github.com/brokoskokoli/altswitch">Auf GitHub ansehen</a>
+      </div>
+      <p class="meta">macOS 13 Ventura oder neuer · Apple Silicon und Intel · Signiert und notarisiert · Kostenlos und Open Source (MIT)</p>
+    </div>
+
+    <section id="warum">
+      <h2>Warum AltSwitch?</h2>
+      <p class="lead">Das eingebaute <kbd>⌘</kbd><kbd>Tab</kbd> wechselt zwischen Programmen. Mit drei Browserfenstern, zwei Dokumenten und einem Terminal landest du trotzdem in Mission Control. AltSwitch listet jedes Fenster einzeln, das zuletzt benutzte zuerst – wie Alt-Tab unter Windows.</p>
+      <table class="compare">
+        <thead><tr><th scope="col"><span class="sr-only">Funktion</span></th><th scope="col" class="c">macOS ⌘-Tab</th><th scope="col" class="c">AltSwitch</th></tr></thead>
+        <tbody>
+          <tr><td>Zu einem bestimmten Fenster wechseln, nicht nur zur App</td><td class="c no"><span aria-hidden="true">–</span><span class="sr-only">nein</span></td><td class="c yes"><span aria-hidden="true">✓</span><span class="sr-only">ja</span></td></tr>
+          <tr><td>Live-Vorschau jedes Fensters</td><td class="c no"><span aria-hidden="true">–</span><span class="sr-only">nein</span></td><td class="c yes"><span aria-hidden="true">✓</span><span class="sr-only">ja</span></td></tr>
+          <tr><td>Raster mit allen Fenstern (wie die Task View)</td><td class="c no"><span aria-hidden="true">–</span><span class="sr-only">nein</span></td><td class="c yes"><span aria-hidden="true">✓</span><span class="sr-only">ja</span></td></tr>
+          <tr><td>Minimierte Fenster in der Liste</td><td class="c no"><span aria-hidden="true">–</span><span class="sr-only">nein</span></td><td class="c yes"><span aria-hidden="true">✓</span><span class="sr-only">ja</span></td></tr>
+          <tr><td>Zuletzt benutzt zuerst, Tastatur und Maus</td><td class="c yes"><span aria-hidden="true">✓</span><span class="sr-only">ja</span></td><td class="c yes"><span aria-hidden="true">✓</span><span class="sr-only">ja</span></td></tr>
+          <tr><td>Eingebaut, nichts zu installieren</td><td class="c yes"><span aria-hidden="true">✓</span><span class="sr-only">ja</span></td><td class="c no"><span aria-hidden="true">–</span><span class="sr-only">nein</span></td></tr>
+        </tbody>
+      </table>
+      <p class="note">⌘-Tab ist schnell und immer da – ideal, wenn du nur das Programm wechseln willst. AltSwitch ist für den Moment, in dem du ein bestimmtes Fenster suchst.</p>
+    </section>
+
+    <section id="funktionen">
+      <h2>Jedes Fenster, einen Tastendruck entfernt</h2>
+      <p class="lead">Eine kleine, native Menüleisten-App, die eine Sache gut macht.</p>
+      <div class="grid">
+        <div class="card"><div class="ico" aria-hidden="true">🪟</div><h3>Fenster für Fenster</h3><p>Jedes offene Fenster aller Programme ist eine eigene Karte, sortiert nach letzter Nutzung. Das vorher benutzte Fenster ist beim ersten <kbd>Tab</kbd> ausgewählt.</p></div>
+        <div class="card"><div class="ico" aria-hidden="true">🖼️</div><h3>Live-Vorschau</h3><p>Jede Karte zeigt ein aktuelles Bild des Fensters – so erkennst du das richtige Dokument auf einen Blick.</p></div>
+        <div class="card"><div class="ico" aria-hidden="true">📐</div><h3>Zwei Ansichten</h3><p>Ein kompaktes Karussell für den schnellen Wechsel oder ein Raster mit allen Fenstern – wie die Task View – mit Pfeiltasten in alle vier Richtungen.</p></div>
+        <div class="card"><div class="ico" aria-hidden="true">⌨️</div><h3>Dein Kurzbefehl</h3><p><kbd>⌥</kbd><kbd>Tab</kbd> oder anstelle von <kbd>⌘</kbd><kbd>Tab</kbd>. Zurück mit <kbd>⇧</kbd><kbd>Tab</kbd> oder kurz <kbd>⇧</kbd> antippen, abbrechen mit <kbd>Esc</kbd>.</p></div>
+        <div class="card"><div class="ico" aria-hidden="true">🖱️</div><h3>Ein Klick</h3><p>Karte anklicken, und das Fenster ist vorn – der erste Klick zählt, kein Doppelklick.</p></div>
+        <div class="card"><div class="ico" aria-hidden="true">🔽</div><h3>Auch minimierte Fenster</h3><p>Minimierte Fenster erscheinen mit einer Markierung und werden beim Auswählen wiederhergestellt.</p></div>
+        <div class="card"><div class="ico" aria-hidden="true">⚙️</div><h3>Stört nicht</h3><p>Lebt in der Menüleiste, ohne Dock-Symbol. Ein Assistent führt durch die Berechtigungen; Start beim Anmelden ist ein Klick.</p></div>
+        <div class="card"><div class="ico" aria-hidden="true">🚀</div><h3>Nativ und leicht</h3><p>Geschrieben in Swift mit AppKit und SwiftUI. Kein Electron, keine Hintergrunddienste. Universal für Apple Silicon und Intel.</p></div>
+        <div class="card"><div class="ico" aria-hidden="true">🔒</div><h3>Privat</h3><p>Keine Netzverbindungen, keine Telemetrie, kein Konto. Siehe <a href="privacy.html">Datenschutz</a>.</p></div>
+      </div>
+    </section>
+
+    <section id="tasten">
+      <h2>Tastenkürzel</h2>
+      <p class="lead">Gezeigt für <kbd>⌥</kbd>; mit der Einstellung <kbd>⌘</kbd> gilt <kbd>⌘</kbd>.</p>
+      <div class="keys">
+        <div><span class="k"><kbd>⌥</kbd><kbd>Tab</kbd></span>Öffnen, vorheriges Fenster auswählen</div>
+        <div><span class="k"><kbd>Tab</kbd></span>Nächstes Fenster (<kbd>⌥</kbd> gedrückt halten)</div>
+        <div><span class="k"><kbd>⇧</kbd><kbd>Tab</kbd></span>Vorheriges Fenster</div>
+        <div><span class="k"><kbd>⇧</kbd></span>Antippen: einen Schritt zurück</div>
+        <div><span class="k"><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd></span>Im Karussell oder Raster bewegen</div>
+        <div><span class="k"><kbd>↵</kbd> / <kbd>Leertaste</kbd></span>Sofort wechseln (oder <kbd>⌥</kbd> loslassen)</div>
+        <div><span class="k"><kbd>Esc</kbd></span>Schließen, ohne zu wechseln</div>
+      </div>
+    </section>
+
+    <section id="installieren" class="install">
+      <h2>Installieren</h2>
+      <ol>
+        <li>Die DMG von der <a href="https://github.com/brokoskokoli/altswitch/releases/latest">Release-Seite</a> laden.</li>
+        <li>Öffnen und <b>AltSwitch</b> in <b>Programme</b> ziehen. Releases sind mit einer Developer ID signiert und von Apple notarisiert.</li>
+        <li>AltSwitch starten. Der Assistent fragt nach <b>Bedienungshilfen</b> (nötig, um den Kurzbefehl abzufangen und Fenster nach vorn zu holen) und optional nach <b>Bildschirmaufnahme</b> (nur für die Vorschaubilder – ohne sie zeigen die Karten das App-Symbol).</li>
+      </ol>
+      <p>Oder mit <a href="https://brew.sh/de/">Homebrew</a>: <code>brew install --cask brokoskokoli/tap/altswitch</code></p>
+      <div class="platforms">
+        <div class="card"><h3>Voraussetzungen</h3><p>macOS 13 Ventura oder neuer, Apple Silicon oder Intel.</p></div>
+        <div class="card"><h3>Aus dem Quellcode bauen</h3><p><code>git clone https://github.com/brokoskokoli/altswitch.git</code>, dann baut <code>./build.sh</code> die <code>.build/AltSwitch.app</code>. Details im <a href="https://github.com/brokoskokoli/altswitch/blob/main/README.de.md">README</a>.</p></div>
+      </div>
+    </section>
+
+    <section id="faq">
+      <h2>Häufige Fragen</h2>
+      <div class="faq">
+        <details><summary>Ist AltSwitch wirklich kostenlos?</summary><p>Ja. Es ist Open Source unter der MIT-Lizenz, ohne Werbung, ohne Abo und ohne Konto.</p></details>
+        <details><summary>Verbindet sich AltSwitch mit dem Internet?</summary><p>Nein. Die App baut überhaupt keine Netzverbindungen auf. Details unter <a href="privacy.html">Datenschutz</a>.</p></details>
+        <details><summary>Wozu braucht die App Bedienungshilfen und Bildschirmaufnahme?</summary><p>Mit den Bedienungshilfen fängt AltSwitch <kbd>⌥</kbd><kbd>Tab</kbd> oder <kbd>⌘</kbd><kbd>Tab</kbd> ab und holt ein bestimmtes Fenster nach vorn. Die Bildschirmaufnahme dient nur den Vorschaubildern deiner Fenster; sie verlassen deinen Mac nie. Ohne sie funktioniert AltSwitch trotzdem und zeigt App-Symbole.</p></details>
+        <details><summary>Kann AltSwitch ⌘-Tab ersetzen?</summary><p>Ja. Im Menüleisten-Menü <b>Command + Tab</b> wählen. Zurück auf <kbd>⌥</kbd><kbd>Tab</kbd> geht jederzeit.</p></details>
+        <details><summary>Wie aktualisiere ich?</summary><p>Mit Homebrew: <code>brew upgrade --cask altswitch</code>. Sonst die neue DMG von der Release-Seite laden und die App ersetzen.</p></details>
+        <details><summary>Gibt es andere Fensterumschalter?</summary><p>Ja, zum Beispiel das Open-Source-Projekt <a href="https://github.com/lwouis/alt-tab-macos">AltTab</a>, das deutlich mehr Einstellungen bietet. AltSwitch will klein und einfach bleiben.</p></details>
+        <details><summary>Wie kann ich helfen?</summary><p>Fehler melden oder Ideen vorschlagen im <a href="https://github.com/brokoskokoli/altswitch/issues">Issue-Tracker</a>; Pull Requests sind willkommen.</p></details>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    AltSwitch ist freie Software unter der <a href="https://github.com/brokoskokoli/altswitch/blob/main/LICENSE">MIT-Lizenz</a>.
+    © 2026 brokoskokoli und Mitwirkende ·
+    <a href="https://github.com/brokoskokoli/altswitch">Quellcode</a> ·
+    <a href="privacy.html">Datenschutz</a> ·
+    <a href="https://github.com/brokoskokoli/altswitch/issues">Fehler melden</a>
+  </footer>
+</div>
+</body>
+</html>

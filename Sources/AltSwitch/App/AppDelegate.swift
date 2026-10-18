@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 import Cocoa
 
 public class AppDelegate: NSObject, NSApplicationDelegate, HotkeyManagerDelegate {

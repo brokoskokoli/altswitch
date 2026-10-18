@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MIT
+blank_issues_enabled: false
+contact_links:
+  - name: Questions & ideas (Discussions)
+    url: https://github.com/brokoskokoli/altswitch/discussions
+    about: Ask how something works, share workflows, or discuss an idea before filing a feature request.
+  - name: Report a security vulnerability
+    url: https://github.com/brokoskokoli/altswitch/security/advisories/new
+    about: Please report security issues privately, not as a public issue.

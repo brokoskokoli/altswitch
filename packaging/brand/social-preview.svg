@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: MIT -->
+<!-- Link preview image website/images/social-preview.png (1280 x 640): GitHub social preview
+     (uploaded by hand in Settings -> General) and og:image / twitter:image of the website.
+     Rendered by tools/make_website_images.sh with resvg, which embeds the app icon.
+     Keep 40 px clear at the edges. -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="1280" height="640" viewBox="0 0 1280 640">
+  <defs>
+    <linearGradient id="spBackground" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1E2A4D"/>
+      <stop offset="0.55" stop-color="#151C33"/>
+      <stop offset="1" stop-color="#0B0F1E"/>
+    </linearGradient>
+    <radialGradient id="spGlow" cx="240" cy="320" r="460" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4D8CF5" stop-opacity="0.40"/>
+      <stop offset="1" stop-color="#4D8CF5" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="spWarmth" cx="1060" cy="110" r="520" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7FD8FF" stop-opacity="0.10"/>
+      <stop offset="1" stop-color="#7FD8FF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="spTagline" x1="462" y1="0" x2="1000" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#6FA5FF"/>
+      <stop offset="1" stop-color="#7FE0F5"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#spBackground)"/>
+  <rect width="1280" height="640" fill="url(#spGlow)"/>
+  <rect width="1280" height="640" fill="url(#spWarmth)"/>
+
+  <image x="60" y="140" width="360" height="360" xlink:href="icon-1024.png"/>
+
+  <g font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+    <text x="458" y="252" font-size="100" font-weight="700" fill="#FFFFFF" letter-spacing="-1">AltSwitch</text>
+    <text x="462" y="331" font-size="41" font-weight="700" fill="#FFFFFF">Windows-style Alt-Tab for your Mac.</text>
+    <text x="462" y="385" font-size="41" font-weight="700" fill="url(#spTagline)">Switch windows, not just apps.</text>
+    <text x="462" y="455" font-size="25" fill="#B9C6E4">Free, open-source window switcher for macOS 13+</text>
+    <text x="462" y="494" font-size="25" fill="#B9C6E4">Live previews · Grid view · Option-Tab or Cmd-Tab · Universal</text>
+  </g>
+</svg>

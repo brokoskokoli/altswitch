@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: MIT -->
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Datenschutz – AltSwitch</title>
+<meta name="description" content="AltSwitch sammelt, speichert und teilt keine personenbezogenen Daten und baut keine Netzverbindungen auf. Was auf deinem Mac bleibt.">
+<link rel="canonical" href="https://brokoskokoli.github.io/altswitch/de/privacy.html">
+<link rel="alternate" hreflang="en" href="https://brokoskokoli.github.io/altswitch/privacy.html">
+<link rel="alternate" hreflang="de" href="https://brokoskokoli.github.io/altswitch/de/privacy.html">
+<link rel="alternate" hreflang="x-default" href="https://brokoskokoli.github.io/altswitch/privacy.html">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f3f5fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d1324" media="(prefers-color-scheme: dark)">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<style>
+  :root { --bg: #f3f5fb; --bg-alt: #ffffff; --text: #121a33; --muted: #4a5470; --border: #dde2ef; --accent: #2457c5; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0d1324; --bg-alt: #171e35; --text: #e8ecf8; --muted: #a3acc6; --border: #263253; --accent: #6ea4ff; }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 17px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 0 16px; }
+  header.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 0; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; color: var(--text); }
+  .brand img { width: 32px; height: 32px; }
+  nav a { margin-left: 20px; color: var(--muted); font-size: 15px; }
+  h1 { font-size: clamp(30px, 5vw, 40px); line-height: 1.15; margin: 24px 0 8px; }
+  h2 { font-size: 22px; margin: 32px 0 8px; }
+  .updated { color: var(--muted); font-size: 14px; }
+  .box { background: var(--bg-alt); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; margin: 20px 0; }
+  li { margin: 6px 0; }
+  code { font: 14px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--bg-alt); border: 1px solid var(--border); border-radius: 6px; padding: 1px 6px; overflow-wrap: anywhere; }
+  footer { color: var(--muted); font-size: 14px; text-align: center; padding: 56px 0 40px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="./"><img src="../favicon.png" alt="" width="32" height="32">AltSwitch</a>
+    <nav><a href="https://github.com/brokoskokoli/altswitch">GitHub</a><a class="lang" href="../privacy.html" hreflang="en" lang="en">English</a></nav>
+  </header>
+
+  <main>
+    <h1>Datenschutz</h1>
+    <p class="updated">Gilt für alle Versionen von AltSwitch. Stand: 18. Oktober 2026.</p>
+
+    <div class="box"><b>Kurz gesagt:</b> AltSwitch sammelt, speichert und teilt keine personenbezogenen Daten und verbindet sich nie mit dem Internet. Alles, was die App von deinen Fenstern sieht, bleibt auf deinem Mac.</div>
+
+    <h2>Keine Datenerhebung</h2>
+    <p>AltSwitch hat keine Analyse, keine Telemetrie, keinen Absturzbericht-Dienst, keine Werbung und keine Benutzerkonten. Die Entwickler erhalten keine Informationen über dich oder deine Nutzung der App.</p>
+
+    <h2>Keine Netzverbindungen</h2>
+    <p>AltSwitch baut überhaupt keine Netzverbindungen auf – nicht einmal für eine Update-Prüfung. Updates kommen über GitHub Releases oder Homebrew, wenn du sie installierst.</p>
+
+    <h2>Was auf deinem Computer bleibt</h2>
+    <ul>
+      <li><b>Fensterliste und Vorschauen.</b> Für die Karten liest AltSwitch Titel und Position deiner offenen Fenster und erstellt mit der Berechtigung „Bildschirmaufnahme“ kleine Vorschaubilder. Diese liegen nur im Arbeitsspeicher, solange die App läuft, werden nie auf die Festplatte geschrieben und verlassen deinen Mac nie.</li>
+      <li><b>Einstellungen.</b> Deine Auswahl (Kurzbefehl, Ansicht, Einrichtung abgeschlossen) steht in <code>~/Library/Preferences/com.stefanrichter.altswitch.plist</code>.</li>
+      <li><b>Start beim Anmelden</b> wird bei macOS eingetragen (Systemeinstellungen → Allgemein → Anmeldeobjekte) und lässt sich dort oder im AltSwitch-Menü abschalten.</li>
+    </ul>
+
+    <h2>Berechtigungen</h2>
+    <ul>
+      <li><b>Bedienungshilfen</b> – um den Kurzbefehl abzufangen und das gewählte Fenster nach vorn zu holen.</li>
+      <li><b>Bildschirmaufnahme</b> (optional) – nur für die Vorschaubilder. Ohne sie zeigt AltSwitch App-Symbole.</li>
+    </ul>
+    <p>Beides kannst du jederzeit in Systemeinstellungen → Datenschutz &amp; Sicherheit widerrufen.</p>
+
+    <h2>Diese Website</h2>
+    <p>Diese Website liegt auf GitHub Pages. Sie setzt keine Cookies, nutzt keine Analyse und lädt nichts von Dritten. GitHub kann beim Aufruf technische Daten wie deine IP-Adresse protokollieren; siehe das <a href="https://docs.github.com/de/site-policy/privacy-policies/github-general-privacy-statement">GitHub Privacy Statement</a>.</p>
+
+    <h2>Kontakt</h2>
+    <p>Fragen zum Datenschutz? Bitte <a href="https://github.com/brokoskokoli/altswitch/issues">ein Issue auf GitHub eröffnen</a>.</p>
+  </main>
+
+  <footer>
+    AltSwitch ist freie Software unter der <a href="https://github.com/brokoskokoli/altswitch/blob/main/LICENSE">MIT-Lizenz</a>.
+    © 2026 brokoskokoli und Mitwirkende ·
+    <a href="./">Startseite</a> ·
+    <a href="https://github.com/brokoskokoli/altswitch/issues">Fehler melden</a>
+  </footer>
+</div>
+</body>
+</html>

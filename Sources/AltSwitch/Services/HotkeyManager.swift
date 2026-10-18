@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+
 import Cocoa
 import Carbon
 import ApplicationServices

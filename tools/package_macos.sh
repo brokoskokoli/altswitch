@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
 # Signs, notarizes and packages a built macOS app: <dist>/<App>-<version>.dmg and .zip (+ .sha256).
 #
 #   tools/package_macos.sh <path/to/App.app> [--notarize]

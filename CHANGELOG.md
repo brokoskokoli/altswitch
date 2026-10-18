@@ -1,34 +1,40 @@
+<!-- SPDX-License-Identifier: MIT -->
 # Changelog
 
-Alle nennenswerten Änderungen an AltSwitch. Format: [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
-Versionen nach [Semantic Versioning](https://semver.org/lang/de/).
+All notable changes to AltSwitch. Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Behoben
-- Beim Durchgehen mit Tab ist jetzt jede ausgewählte Kachel markiert. Vorher blieben manche ohne blaue Markierung, obwohl der Zähler weiterzählte.
+### Fixed
+- **Highlight:** every selected card is highlighted while you step through with Tab. Before, some
+  cards stayed without the blue frame although the counter moved on.
 
 ## [1.0.2] - 2026-10-18
 
-### Hinzugefügt
-- Minimierte Fenster zeigen eine Vorschau: das letzte Bild, bevor sie minimiert wurden.
-- Beim ersten Start aus dem Programme-Ordner schaltet sich der Autostart ein. Abschalten geht weiter im Menü.
-- Es läuft immer nur eine Instanz. Ein zweiter Start meldet „AltSwitch läuft bereits“ und beendet sich.
+### Added
+- **Previews of minimized windows:** they show the last image from before they were minimized.
+- **Start at login** is switched on at the first launch from the Applications folder. You can turn
+  it off in the menu bar menu.
+- **Single instance:** a second launch shows a notice (“AltSwitch läuft bereits”) and quits.
 
-### Behoben
-- Rasteransicht: ↓ springt nicht mehr in die erste Reihe, wenn die letzte Reihe kürzer ist.
-- Rasteransicht: Scrollen unter dem ruhenden Mauszeiger verstellt die Auswahl nicht mehr.
+### Fixed
+- **Grid view:** `↓` no longer jumps back to the first row when the last row is shorter.
+- **Grid view:** scrolling under a resting mouse pointer no longer changes the selection.
 
 ## [1.0.1] - 2026-10-18
 
-### Geändert
-- AltSwitch ist jetzt mit einer Apple Developer ID signiert und von Apple notarisiert. Die App startet ohne Gatekeeper-Warnung.
-- Universal-Build: läuft nativ auf Apple-Silicon- und Intel-Macs.
-- Installation per Homebrew: `brew install --cask brokoskokoli/tap/altswitch`.
+### Changed
+- **Signed and notarized:** AltSwitch is signed with an Apple Developer ID and notarized by Apple,
+  so it opens without a Gatekeeper warning.
+- **Universal app:** runs natively on Apple silicon and Intel Macs.
+- **Homebrew:** `brew install --cask brokoskokoli/tap/altswitch`.
 
 ## [1.0.0] - 2026-10-17
 
-Erste Version (nicht signiert, zurückgezogen).
+First version (unsigned, withdrawn).
 
-[1.0.2]: https://github.com/brokoskokoli/altswitch/releases/tag/v1.0.2
+[Unreleased]: https://github.com/brokoskokoli/altswitch/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/brokoskokoli/altswitch/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/brokoskokoli/altswitch/releases/tag/v1.0.1
+[1.0.0]: https://github.com/brokoskokoli/altswitch/commits/6f36082
