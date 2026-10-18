@@ -36,8 +36,8 @@ jobs:
         run: |
           set -euo pipefail
           ./build.sh
-          lipo "$APP_NAME.app/Contents/MacOS/$APP_NAME" -verify_arch arm64 x86_64
-          echo "BUILT_APP=$APP_NAME.app" >> "$GITHUB_ENV"
+          lipo ".build/$APP_NAME.app/Contents/MacOS/$APP_NAME" -verify_arch arm64 x86_64
+          echo "BUILT_APP=.build/$APP_NAME.app" >> "$GITHUB_ENV"
 
       - name: Version matches the tag
         run: |

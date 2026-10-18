@@ -3,7 +3,8 @@ set -euo pipefail
 
 # Configuration
 APP_NAME="AltSwitch"
-BUNDLE_NAME="${APP_NAME}.app"
+# Inside the hidden .build folder: Spotlight and Launchpad do not pick up a second copy
+BUNDLE_NAME=".build/${APP_NAME}.app"
 CONTENTS_DIR="${BUNDLE_NAME}/Contents"
 MACOS_DIR="${CONTENTS_DIR}/MacOS"
 RESOURCES_DIR="${CONTENTS_DIR}/Resources"

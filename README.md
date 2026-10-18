@@ -121,7 +121,7 @@ cd altswitch
 make
 
 # AltSwitch starten
-open AltSwitch.app
+open .build/AltSwitch.app
 ```
 
 ---

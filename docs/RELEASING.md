@@ -11,8 +11,10 @@ Ein Tag `vX.Y.Z` startet `.github/workflows/release.yml`:
 4. **homebrew-tap** (Environment `release`): `version` und `sha256` in
    `brokoskokoli/homebrew-tap/Casks/altswitch.rb` werden aktualisiert.
 
-Jeder Job mit Environment `release` wartet auf eine Freigabe („Review deployments“ im Lauf),
-pro Release also drei Freigaben. Immer nur ein Release gleichzeitig taggen.
+Das Environment `release` hat bewusst keine Pflicht-Freigabe: Ein gepushter Tag veröffentlicht
+ohne Rückfrage. Wer eine Bremse will, trägt unter Settings → Environments → release einen
+„Required reviewer“ ein; dann wartet jeder der drei Jobs auf „Review deployments“.
+Immer nur ein Release gleichzeitig taggen.
 
 ## Secrets (Environment `release`)
 
@@ -27,7 +29,7 @@ pro Release also drei Freigaben. Immer nur ein Release gleichzeitig taggen.
 
 Einrichten oder erneuern: `tools/setup_release_secrets.sh` im eigenen Terminal ausführen. Das
 Skript exportiert das Zertifikat aus dem Schlüsselbund, findet die `.p8`, prüft sie bei Apple und
-legt das Environment mit Freigabe-Pflicht an (nur Tags `v*` und Branch `main`). Kein Wert landet
+legt das Environment an (Schutzregeln optional). Kein Wert landet
 im Repo oder in einer Kommandozeile.
 
 ## Ablauf
@@ -45,10 +47,10 @@ im Repo oder in einer Kommandozeile.
 ## Lokal
 
 ```bash
-./build.sh                                   # ad-hoc signiert, zum Ausprobieren
-tools/package_macos.sh AltSwitch.app         # DMG/ZIP ad-hoc (nur Test)
+./build.sh                                  # ad-hoc signiert, zum Ausprobieren
+tools/package_macos.sh .build/AltSwitch.app # DMG/ZIP ad-hoc (nur Test)
 SIGN_IDENTITY="Developer ID Application: Stefan Richter (AGRWTKQZ8C)" \
-NOTARY_PROFILE=<profil> tools/package_macos.sh AltSwitch.app --notarize   # Notfallweg ohne CI
+NOTARY_PROFILE=<profil> tools/package_macos.sh .build/AltSwitch.app --notarize   # Notfallweg ohne CI
 ```
 
 `NOTARY_PROFILE` legt `xcrun notarytool store-credentials <profil>` einmalig an. Die Dateien vom

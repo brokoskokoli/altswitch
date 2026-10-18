@@ -7,7 +7,7 @@ build:
 	@./build.sh
 
 clean:
-	rm -rf AltSwitch.app
+	rm -rf .build/AltSwitch.app
 
 run: build
-	open AltSwitch.app
+	open .build/AltSwitch.app

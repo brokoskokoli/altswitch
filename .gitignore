@@ -15,7 +15,7 @@ DerivedData/
 .netrc
 
 # Application bundles & Distribution artifacts
-AltSwitch.app
+/AltSwitch.app
 main
 *.dmg
 *.zip
