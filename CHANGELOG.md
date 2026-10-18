@@ -3,6 +3,11 @@
 Alle nennenswerten Änderungen an AltSwitch. Format: [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionen nach [Semantic Versioning](https://semver.org/lang/de/).
 
+## [Unreleased]
+
+### Behoben
+- Beim Durchgehen mit Tab ist jetzt jede ausgewählte Kachel markiert. Vorher blieben manche ohne blaue Markierung, obwohl der Zähler weiterzählte.
+
 ## [1.0.2] - 2026-10-18
 
 ### Hinzugefügt

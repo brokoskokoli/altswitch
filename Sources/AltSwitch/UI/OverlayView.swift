@@ -189,7 +189,8 @@ struct OverlayView: View {
                     ScrollViewReader { proxy in
                         ScrollView(.vertical, showsIndicators: true) {
                             LazyVGrid(columns: columns, spacing: 14) {
-                                ForEach(Array(viewModel.windows.enumerated()), id: \.element.id) { index, item in
+                                // Identity by position: a duplicate or reused window ID must not leave a card unhighlighted
+                                ForEach(Array(viewModel.windows.enumerated()), id: \.offset) { index, item in
                                     WindowCardView(
                                         item: item,
                                         isSelected: viewModel.selectedIndex == index,
@@ -217,7 +218,8 @@ struct OverlayView: View {
                     ScrollViewReader { proxy in
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 14) {
-                                ForEach(Array(viewModel.windows.enumerated()), id: \.element.id) { index, item in
+                                // Identity by position: a duplicate or reused window ID must not leave a card unhighlighted
+                                ForEach(Array(viewModel.windows.enumerated()), id: \.offset) { index, item in
                                     WindowCardView(
                                         item: item,
                                         isSelected: viewModel.selectedIndex == index,

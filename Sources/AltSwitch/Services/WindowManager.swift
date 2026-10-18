@@ -232,7 +232,9 @@ public class WindowManager {
             }
         }
 
-        return results
+        // One card per window, even if a window shows up in both lists
+        var seen = Set<CGWindowID>()
+        return results.filter { seen.insert($0.id).inserted }
     }
 
     /// Loads window thumbnails asynchronously without blocking the main run loop.
