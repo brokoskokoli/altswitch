@@ -397,8 +397,17 @@ public class WindowManager {
         if copyResult == .success, let axWindows = windowListValue as? [AXUIElement] {
             var matchedWindow: AXUIElement?
 
+            // 0. Exact match by window ID: windows of one app often share size and nearly the
+            //    same position, so the geometry match below would pick the wrong one
+            if let getWindow = dynamicAXUIElementGetWindow {
+                matchedWindow = axWindows.first { axWin in
+                    var wid: CGWindowID = 0
+                    return getWindow(axWin, &wid) == .success && wid == item.id
+                }
+            }
+
             // 1. If item.isMinimized, prioritize matching minimized windows by title
-            if item.isMinimized {
+            if matchedWindow == nil && item.isMinimized {
                 for axWin in axWindows {
                     var isMinVal: AnyObject?
                     if AXUIElementCopyAttributeValue(axWin, kAXMinimizedAttribute as CFString, &isMinVal) == .success,

@@ -6,6 +6,11 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- **Windows of the same app:** switching between several windows of one app (e.g. VS Code)
+  now opens the window you picked. Before, AltSwitch often brought up another window of that app
+  because the windows had the same size.
+
 ## [1.1.2] - 2026-10-19
 
 ### Fixed
