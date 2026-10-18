@@ -6,6 +6,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-10-19
+
 ### Fixed
 - **Windows of the same app:** switching between several windows of one app (e.g. VS Code)
   now opens the window you picked. Before, AltSwitch often brought up another window of that app
@@ -65,7 +67,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 First version (unsigned, withdrawn).
 
-[Unreleased]: https://github.com/brokoskokoli/altswitch/compare/v1.1.2...HEAD
+[Unreleased]: https://github.com/brokoskokoli/altswitch/compare/v1.1.3...HEAD
+[1.1.3]: https://github.com/brokoskokoli/altswitch/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/brokoskokoli/altswitch/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/brokoskokoli/altswitch/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/brokoskokoli/altswitch/compare/v1.0.2...v1.1.0
