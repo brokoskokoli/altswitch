@@ -17,6 +17,7 @@
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "Kompakti (kohdistus)";
 "layout.grid" = "Kaikki ikkunat (ruudukkonäkymä)";
+"layout.grouped" = "Ryhmitelty sovelluksittain (ikkunaluettelo)";
 "alert.alreadyRunning.title" = "AltSwitch on jo käynnissä";
 "alert.alreadyRunning.message" = "AltSwitchista voi olla käynnissä vain yksi kopio kerrallaan. Käynnissä olevan kopion löydät valikkoriviltä.";
 "alert.ok" = "OK";
@@ -27,6 +28,8 @@
 "overlay.hint.navigate" = "Siirry";
 "overlay.hint.cancel" = "Kumoa";
 "overlay.hint.release" = "Vaihda vapauttamalla näppäin";
+"overlay.hint.showList" = "Luettelo sovelluksittain";
+"overlay.hint.showCards" = "Esikatselut";
 "card.screenRecordingRequired" = "Näytön tallennus vaaditaan";
 "card.loading" = "Ladataan…";
 "setup.windowTitle" = "Tervetuloa AltSwitchiin — Käyttöönotto";

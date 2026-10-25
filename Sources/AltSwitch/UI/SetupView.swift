@@ -293,6 +293,15 @@ public struct SetupView: View {
 
     // MARK: - Step 3: Quick Settings Card
 
+    private var layoutPicker: some View {
+        Picker("", selection: $viewModel.selectedLayout) {
+            ForEach(SwitcherLayout.allCases, id: \.self) { layout in
+                Text(verbatim: layout.title).tag(layout)
+            }
+        }
+        .labelsHidden()
+    }
+
     private var settingsCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 10) {
@@ -329,11 +338,14 @@ public struct SetupView: View {
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.secondary)
 
-                Picker("", selection: $viewModel.selectedLayout) {
-                    Text(verbatim: SwitcherLayout.compact.title).tag(SwitcherLayout.compact)
-                    Text(verbatim: SwitcherLayout.grid.title).tag(SwitcherLayout.grid)
+                // Three long labels do not fit side by side in every language: fall back to a menu
+                ViewThatFits(in: .horizontal) {
+                    layoutPicker
+                        .pickerStyle(.segmented)
+                        .fixedSize()
+                    layoutPicker
+                        .pickerStyle(.menu)
                 }
-                .pickerStyle(.segmented)
             }
 
             Toggle(isOn: $viewModel.autostartEnabled) {

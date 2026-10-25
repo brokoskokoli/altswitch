@@ -36,8 +36,10 @@ window you wanted.
 - **Every window, not every app** – each open window gets its own card with app icon, title and
   live preview.
 - **Most recently used order** – the first Tab selects the window you used before the current one.
-- **Two layouts** – a compact carousel for quick switching, or a grid of all windows (like Task
-  View on Windows) with arrow-key navigation in both directions.
+- **Three layouts** – a compact carousel for quick switching, a grid of all windows (like Task
+  View on Windows) with arrow-key navigation in both directions, or a list grouped by app that
+  shows the full window titles (e.g. `file.swift — project`, `user@host: ~/project — zsh`).
+  Press `G` in the switcher to flip between cards and list.
 - **Your shortcut** – `⌥-Tab` (Option-Tab) or `⌘-Tab` (replaces the app switcher), set in the menu.
 - **Keyboard or mouse** – `⇧-Tab` or a tap on Shift goes back, `Esc` cancels, a single click
   activates a card.
@@ -83,6 +85,8 @@ Security*:
 | Open the switcher, next window | `⌥-Tab` or `⌘-Tab` |
 | Next / previous | `Tab` / `⇧-Tab`, or tap `⇧` |
 | Move in carousel or grid | `←` `→` `↑` `↓` |
+| Grouped list: previous / next row, previous / next app | `↑` `↓`, `←` `→` |
+| Cards ⇄ grouped list | `G` (while the switcher is open) |
 | Switch to the selected window | release the modifier, `Return` or `Space` |
 | Switch by mouse | click a card |
 | Cancel | `Esc` |

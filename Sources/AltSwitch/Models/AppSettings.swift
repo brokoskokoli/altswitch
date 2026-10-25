@@ -20,6 +20,8 @@ public enum ShortcutMode: String, CaseIterable {
 public enum SwitcherLayout: String, CaseIterable {
     case compact = "compact"
     case grid = "grid"
+    /// One section per app with the full window titles, no previews
+    case grouped = "grouped"
 
     public var title: String {
         switch self {
@@ -27,7 +29,14 @@ public enum SwitcherLayout: String, CaseIterable {
             return L("layout.compact")
         case .grid:
             return L("layout.grid")
+        case .grouped:
+            return L("layout.grouped")
         }
+    }
+
+    /// Shows a card with a preview per window (as opposed to the grouped title list)
+    public var showsCards: Bool {
+        self != .grouped
     }
 }
 
@@ -37,6 +46,7 @@ public class AppSettings: ObservableObject {
     private let defaults = UserDefaults.standard
     private let shortcutKey = "AltSwitch_ShortcutMode"
     private let layoutKey = "AltSwitch_SwitcherLayout"
+    private let lastCardLayoutKey = "AltSwitch_LastCardLayout"
     private let hasCompletedSetupKey = "AltSwitch_HasCompletedSetup"
     private let languageKey = "AltSwitch_Language"
 
@@ -49,7 +59,22 @@ public class AppSettings: ObservableObject {
     @Published public var switcherLayout: SwitcherLayout {
         didSet {
             defaults.set(switcherLayout.rawValue, forKey: layoutKey)
+            if switcherLayout.showsCards {
+                lastCardLayout = switcherLayout
+            }
         }
+    }
+
+    /// Card layout the view toggle (G in the switcher) returns to from the grouped list
+    public private(set) var lastCardLayout: SwitcherLayout {
+        didSet {
+            defaults.set(lastCardLayout.rawValue, forKey: lastCardLayoutKey)
+        }
+    }
+
+    /// Switches between the cards (compact or grid, whichever was used last) and the grouped list
+    public func toggleCardsAndGroupedList() {
+        switcherLayout = switcherLayout.showsCards ? .grouped : lastCardLayout
     }
 
     @Published public var hasCompletedSetup: Bool {
@@ -73,11 +98,20 @@ public class AppSettings: ObservableObject {
             self.shortcutMode = .optionTab
         }
 
+        let initialLayout: SwitcherLayout
         if let savedLayout = defaults.string(forKey: layoutKey),
            let layout = SwitcherLayout(rawValue: savedLayout) {
-            self.switcherLayout = layout
+            initialLayout = layout
         } else {
-            self.switcherLayout = .compact
+            initialLayout = .compact
+        }
+        self.switcherLayout = initialLayout
+
+        if let savedCardLayout = defaults.string(forKey: lastCardLayoutKey),
+           let layout = SwitcherLayout(rawValue: savedCardLayout), layout.showsCards {
+            self.lastCardLayout = layout
+        } else {
+            self.lastCardLayout = initialLayout.showsCards ? initialLayout : .compact
         }
 
         self.hasCompletedSetup = defaults.bool(forKey: hasCompletedSetupKey)

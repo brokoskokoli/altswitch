@@ -17,6 +17,7 @@
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "Kompakt (fókusz)";
 "layout.grid" = "Összes ablak (rácsnézet)";
+"layout.grouped" = "Alkalmazásonként csoportosítva (ablaklista)";
 "alert.alreadyRunning.title" = "Az AltSwitch már fut";
 "alert.alreadyRunning.message" = "Egyszerre csak egy AltSwitch-példány futhat. A futó példányt a menüsorban találod.";
 "alert.ok" = "OK";
@@ -27,6 +28,8 @@
 "overlay.hint.navigate" = "Navigálás";
 "overlay.hint.cancel" = "Mégsem";
 "overlay.hint.release" = "Engedd fel a billentyűt a váltáshoz";
+"overlay.hint.showList" = "Lista alkalmazásonként";
+"overlay.hint.showCards" = "Előnézetek";
 "card.screenRecordingRequired" = "Képernyőfelvétel szükséges";
 "card.loading" = "Betöltés…";
 "setup.windowTitle" = "Üdvözöl az AltSwitch — Első beállítás";

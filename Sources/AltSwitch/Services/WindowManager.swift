@@ -157,6 +157,7 @@ public class WindowManager {
             if windowTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 // Try fetching title via AX if empty
                 windowTitle = getAXWindowTitle(
+                    windowID: wid,
                     pid: pid,
                     bounds: bounds,
                     appName: appName,
@@ -493,6 +494,7 @@ public class WindowManager {
     }
 
     private func getAXWindowTitle(
+        windowID: CGWindowID? = nil,
         pid: pid_t,
         bounds: CGRect,
         appName: String,
@@ -520,6 +522,21 @@ public class WindowManager {
                 axWindows = []
             }
             axWindowsCache[pid] = axWindows
+        }
+
+        // Exact match by window ID: windows of one app often share their size, so the geometry
+        // match below would give them all the same title (the grouped list shows titles only)
+        if let windowID = windowID, let getWindow = dynamicAXUIElementGetWindow {
+            for axWin in axWindows {
+                var wid: CGWindowID = 0
+                guard getWindow(axWin, &wid) == .success, wid == windowID else { continue }
+                var titleVal: AnyObject?
+                if AXUIElementCopyAttributeValue(axWin, kAXTitleAttribute as CFString, &titleVal) == .success,
+                   let t = titleVal as? String, !t.isEmpty {
+                    return t
+                }
+                break
+            }
         }
 
         // Single window optimization

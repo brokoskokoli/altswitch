@@ -17,6 +17,7 @@
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "Компактный (фокус)";
 "layout.grid" = "Все окна (сетка)";
+"layout.grouped" = "По приложениям (список окон)";
 "alert.alreadyRunning.title" = "AltSwitch уже запущен";
 "alert.alreadyRunning.message" = "Одновременно может работать только один экземпляр AltSwitch. Запущенный экземпляр находится в строке меню.";
 "alert.ok" = "ОК";
@@ -27,6 +28,8 @@
 "overlay.hint.navigate" = "Навигация";
 "overlay.hint.cancel" = "Отменить";
 "overlay.hint.release" = "Отпустите клавишу для переключения";
+"overlay.hint.showList" = "Список по приложениям";
+"overlay.hint.showCards" = "Миниатюры";
 "card.screenRecordingRequired" = "Требуется запись экрана";
 "card.loading" = "Загрузка…";
 "setup.windowTitle" = "Добро пожаловать в AltSwitch — Первоначальная настройка";

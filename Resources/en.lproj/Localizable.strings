@@ -49,6 +49,9 @@
 /* Layout choice: grid of all windows */
 "layout.grid" = "All Windows (Grid Overview)";
 
+/* Layout choice: list of full window titles, one section per app */
+"layout.grouped" = "Grouped by App (Window List)";
+
 /* Alert at a second launch */
 "alert.alreadyRunning.title" = "AltSwitch is already running";
 
@@ -78,6 +81,12 @@
 
 /* Footer hint: releasing the modifier key switches */
 "overlay.hint.release" = "Release the key to switch";
+
+/* Footer hint next to the G key in the card layouts: switch to the list grouped by app (short) */
+"overlay.hint.showList" = "List by app";
+
+/* Footer hint next to the G key in the grouped list: switch back to the cards with previews (short) */
+"overlay.hint.showCards" = "Previews";
 
 /* Card without preview because the permission is missing */
 "card.screenRecordingRequired" = "Screen Recording required";

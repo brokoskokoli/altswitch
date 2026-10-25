@@ -6,6 +6,18 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Grouped by app:** a third layout lists the windows app by app – app icon and name as a header,
+  below it the full window titles (e.g. `file.swift — project` in VS Code or
+  `user@host: ~/project — zsh` in Terminal) instead of previews. Apps are ordered by when you last
+  used them, their windows too; a quick Tab still goes back to the window you used before. `↑` `↓`
+  move by row, `←` `→` jump to the previous or next app. Choose it under *Layout* in the menu or
+  in the setup assistant, or press `G` while the switcher is open to flip between cards and list.
+
+### Fixed
+- **Window titles:** without the Screen Recording permission, several windows of one app with the
+  same size no longer all show the same title.
+
 ## [1.1.3] - 2026-10-19
 
 ### Fixed
