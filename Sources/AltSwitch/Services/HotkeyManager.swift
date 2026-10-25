@@ -22,6 +22,7 @@ public class HotkeyManager {
         didSet {
             if !isOverlayActive {
                 activeTriggerModifier = nil
+                wasTriggerModifierDown = false
                 wasShiftDown = false
                 shiftWasUsedWithKey = false
             }
@@ -31,6 +32,10 @@ public class HotkeyManager {
     private var activeTriggerModifier: CGEventFlags?
     private var wasShiftDown: Bool = false
     private var shiftWasUsedWithKey: Bool = false
+
+    /// The shortcut's modifier went down while the overlay is closed: a press may follow.
+    public var onTriggerModifierDown: (() -> Void)?
+    private var wasTriggerModifierDown = false
 
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
@@ -249,6 +254,13 @@ public class HotkeyManager {
             } else {
                 wasShiftDown = flags.contains(.maskShift)
                 shiftWasUsedWithKey = false
+
+                let triggerFlag: CGEventFlags = currentMode == .cmdTab ? .maskCommand : .maskAlternate
+                let isTriggerDown = flags.contains(triggerFlag)
+                if isTriggerDown && !wasTriggerModifierDown {
+                    onTriggerModifierDown?()
+                }
+                wasTriggerModifierDown = isTriggerDown
             }
         }
 

@@ -39,9 +39,10 @@ public class WindowOrderTracker {
     }
 
     /// Orders windows by last focus. Windows never seen focused keep their relative order behind them.
-    public func sortedByRecentUse(_ windows: [WindowItem]) -> [WindowItem] {
+    /// `regularApps`: the running regular apps if the caller has them (saves reading them again).
+    public func sortedByRecentUse(_ windows: [WindowItem], regularApps: [NSRunningApplication]? = nil) -> [WindowItem] {
         // Picks up apps that were not ready before, or Accessibility permission granted after launch
-        observeRunningApps()
+        observeRunningApps(regularApps)
         // The frontmost window is the current one, even if its notification was missed
         if let front = NSWorkspace.shared.frontmostApplication {
             noteFocusedWindow(of: front.processIdentifier)
@@ -92,9 +93,10 @@ public class WindowOrderTracker {
         }
     }
 
-    private func observeRunningApps() {
+    private func observeRunningApps(_ regularApps: [NSRunningApplication]? = nil) {
         guard PermissionsManager.shared.isAccessibilityGranted else { return }
-        for app in NSWorkspace.shared.runningApplications where app.activationPolicy == .regular {
+        let apps = regularApps ?? NSWorkspace.shared.runningApplications
+        for app in apps where app.activationPolicy == .regular {
             observe(app)
         }
     }

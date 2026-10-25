@@ -133,6 +133,12 @@ public class WindowManager {
     private let cacheQueue = DispatchQueue(label: "AltSwitch.thumbnailCache", qos: .utility)
     private let maxCachedThumbnailWidth = 520
     private var lastBackgroundRefresh = Date.distantPast
+    private var lastPrepareForPress = Date.distantPast
+    /// Regular apps as read by prepareForPress, for the next press only. Main thread only.
+    private var preparedRegularApps: (apps: [NSRunningApplication], time: CFTimeInterval)?
+    /// App icons by process. Loading an icon takes ~0.1–2 ms and the overlay needs one per window
+    /// on every press. Main thread only.
+    private var iconCache: [pid_t: NSImage] = [:]
 
     private init() {
         // Refresh the cache whenever the user switches apps: a window minimized afterwards
@@ -147,17 +153,30 @@ public class WindowManager {
                 self?.warmUp([app])
             }
         }
+        // A new process may get the same PID
+        NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didTerminateApplicationNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] note in
+            if let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication {
+                self?.iconCache[app.processIdentifier] = nil
+            }
+        }
     }
 
-    /// The first Accessibility call to an app is slow (~150 ms for ten apps here). Doing it in the
-    /// background keeps that cost out of the first shortcut press.
+    /// The first Accessibility call to an app is slow (~20 ms each, ~300 ms for 15 apps one after
+    /// the other here). Doing it in the background, for all apps at once (~50 ms), keeps that cost
+    /// out of the first shortcut press and out of the launch.
     public func warmUp(_ apps: [NSRunningApplication]? = nil) {
         let currentPID = NSRunningApplication.current.processIdentifier
-        let targets = (apps ?? NSWorkspace.shared.runningApplications).filter {
-            $0.activationPolicy == .regular && $0.processIdentifier != currentPID
-        }
+        let candidates = apps ?? NSWorkspace.shared.runningApplications
         DispatchQueue.global(qos: .utility).async {
-            for app in targets {
+            let targets = candidates.filter {
+                $0.activationPolicy == .regular && $0.processIdentifier != currentPID
+            }
+            DispatchQueue.concurrentPerform(iterations: targets.count) { index in
+                let app = targets[index]
                 _ = app.icon
                 let appElement = AXUIElementCreateApplication(app.processIdentifier)
                 AXUIElementSetMessagingTimeout(appElement, 0.2)
@@ -165,6 +184,45 @@ public class WindowManager {
                 AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &windowListValue)
             }
         }
+    }
+
+    /// Called when the shortcut's modifier goes down, shortly before the shortcut itself. Finding
+    /// the regular apps asks LaunchServices about every running process (~110 here), which takes
+    /// 5–20 ms whenever its data has gone stale, and it goes stale within a fraction of a second.
+    /// Reading it now, in the background, keeps that out of the shortcut press.
+    public func prepareForPress() {
+        guard Date().timeIntervalSince(lastPrepareForPress) > 0.5 else { return }
+        lastPrepareForPress = Date()
+        let apps = NSWorkspace.shared.runningApplications
+        let currentPID = NSRunningApplication.current.processIdentifier
+        DispatchQueue.global(qos: .userInteractive).async { [weak self] in
+            let regular = apps.filter { $0.activationPolicy == .regular && $0.processIdentifier != currentPID }
+            let time = CACurrentMediaTime()
+            DispatchQueue.main.async {
+                self?.preparedRegularApps = (regular, time)
+            }
+        }
+    }
+
+    /// The regular apps from prepareForPress if they are at most a second old, else read now.
+    private func takeRegularApps() -> [NSRunningApplication] {
+        defer { preparedRegularApps = nil }
+        if let prepared = preparedRegularApps, CACurrentMediaTime() - prepared.time < 1.0 {
+            return prepared.apps
+        }
+        let currentPID = NSRunningApplication.current.processIdentifier
+        return NSWorkspace.shared.runningApplications.filter {
+            $0.activationPolicy == .regular && $0.processIdentifier != currentPID
+        }
+    }
+
+    private func icon(of app: NSRunningApplication) -> NSImage? {
+        if let cached = iconCache[app.processIdentifier] {
+            return cached
+        }
+        let icon = app.icon
+        iconCache[app.processIdentifier] = icon
+        return icon
     }
 
     /// Cached images for the given windows, so cards show a preview right away instead of a placeholder.
@@ -191,20 +249,26 @@ public class WindowManager {
             return []
         }
 
-        let currentPID = NSRunningApplication.current.processIdentifier
-        let regularApps = NSWorkspace.shared.runningApplications.filter {
-            $0.activationPolicy == .regular && $0.processIdentifier != currentPID
-        }
+        let regularApps = takeRegularApps()
         var appByPID: [pid_t: NSRunningApplication] = [:]
         for app in regularApps {
             appByPID[app.processIdentifier] = app
         }
 
         // Windows as each app reports them. An app missing here did not answer (busy or timed out).
+        // All apps at once: each call waits for the app to answer, so one app after the other the
+        // waits add up (~10–40 ms here), and one app running into the timeout would delay the rest.
+        var fetched = [[AXWindowInfo]?](repeating: nil, count: regularApps.count)
+        fetched.withUnsafeMutableBufferPointer { slots in
+            DispatchQueue.concurrentPerform(iterations: regularApps.count) { index in
+                slots[index] = axWindowInfos(of: regularApps[index].processIdentifier)
+            }
+        }
         var axWindowsByPID: [pid_t: [AXWindowInfo]] = [:]
         var axWindowByID: [CGWindowID: AXWindowInfo] = [:]
-        for pid in regularApps.map({ $0.processIdentifier }) {
-            guard let windows = axWindowInfos(of: pid) else { continue }
+        for (app, windows) in zip(regularApps, fetched) {
+            guard let windows = windows else { continue }
+            let pid = app.processIdentifier
             axWindowsByPID[pid] = windows
             for window in windows where window.id != 0 {
                 axWindowByID[window.id] = window
@@ -284,7 +348,7 @@ public class WindowManager {
                 appName: appName,
                 windowTitle: title,
                 bounds: bounds,
-                appIcon: app.icon,
+                appIcon: icon(of: app),
                 thumbnail: nil,
                 isMinimized: isMinimized,
                 runningApp: app,
@@ -318,7 +382,7 @@ public class WindowManager {
                     appName: appName,
                     windowTitle: window.title.isEmpty ? appName : window.title,
                     bounds: axFrame(of: window.element) ?? CGRect(x: 0, y: 0, width: 800, height: 600),
-                    appIcon: app.icon,
+                    appIcon: icon(of: app),
                     thumbnail: nil,
                     isMinimized: true,
                     runningApp: app,
@@ -329,7 +393,7 @@ public class WindowManager {
 
         // Screen stacking order groups windows by app (activating an app raises all its windows):
         // order by when each window last had focus instead
-        return WindowOrderTracker.shared.sortedByRecentUse(onScreen + offScreen)
+        return WindowOrderTracker.shared.sortedByRecentUse(onScreen + offScreen, regularApps: regularApps)
     }
 
     /// The app's windows with the attributes needed to sort out junk, one Accessibility round trip
@@ -394,20 +458,30 @@ public class WindowManager {
             return
         }
 
+        // Minimized, hidden or on another Space: a capture would be empty and overwrite the cached image
+        let targets = windows.filter { $0.isOnScreen && !$0.isMinimized }
         DispatchQueue.global(qos: .userInteractive).async { [weak self] in
+            guard let self = self else { return }
             let listOptions: CGWindowListOption = [.optionIncludingWindow]
-            let imageOptions: CGWindowImageOption = [.bestResolution, .boundsIgnoreFraming]
 
-            for item in windows {
-                // Minimized, hidden or on another Space: a capture would be empty and overwrite the
-                // cached image
-                guard item.isOnScreen, !item.isMinimized else { continue }
-                if let thumb = createImage(.null, listOptions, item.id, imageOptions)?.takeRetainedValue() {
-                    DispatchQueue.main.async {
-                        onThumbnail(item.id, thumb)
-                    }
-                    self?.storeInCache(thumb, for: item.id)
+            // Several windows at once: one after the other, 16 windows took ~400 ms here, mostly
+            // spent scaling down Retina-sized captures
+            DispatchQueue.concurrentPerform(iterations: targets.count) { index in
+                let item = targets[index]
+                // The card shows at most 220 pt; the cached size covers that on Retina. A window at
+                // least that wide in points gives enough pixels without the 4x of a Retina capture.
+                let resolution: CGWindowImageOption = item.bounds.width >= CGFloat(self.maxCachedThumbnailWidth)
+                    ? .nominalResolution : .bestResolution
+                guard let thumb = createImage(.null, listOptions, item.id, [resolution, .boundsIgnoreFraming])?.takeRetainedValue() else {
+                    return
                 }
+                // The card gets the small image too: a full Retina capture per card only costs
+                // memory and drawing time
+                let scaled = self.downscaled(thumb)
+                DispatchQueue.main.async {
+                    onThumbnail(item.id, scaled)
+                }
+                self.storeScaledInCache(scaled, for: item.id)
             }
         }
     }
@@ -448,7 +522,11 @@ public class WindowManager {
 
     private func storeInCache(_ image: CGImage, for id: CGWindowID) {
         guard image.width > 1, image.height > 1 else { return }
-        let scaled = downscaled(image)
+        storeScaledInCache(downscaled(image), for: id)
+    }
+
+    private func storeScaledInCache(_ scaled: CGImage, for id: CGWindowID) {
+        guard scaled.width > 1, scaled.height > 1 else { return }
         cacheQueue.async { [weak self] in
             self?.thumbnailCache[id] = scaled
         }

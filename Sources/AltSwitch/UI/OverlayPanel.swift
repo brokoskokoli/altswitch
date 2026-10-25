@@ -192,12 +192,16 @@ public class OverlayPanel: NSPanel {
     public func prewarm() {
         viewModel.present(recentWindows: WindowManager.shared.getOpenWindows(), initialIndex: 0, layout: AppSettings.shared.switcherLayout)
         alphaValue = 0
-        setFrame(NSRect(x: -10000, y: -10000, width: 750, height: 330), display: false)
+        // At the size the first press will use: the grid only builds the cards it has room for
+        if let screen = NSScreen.main ?? NSScreen.screens.first {
+            applyFrame(on: screen)
+        }
+        setFrameOrigin(NSPoint(x: -10000 - frame.width, y: -10000 - frame.height))
         orderFrontRegardless()
         contentView?.layoutSubtreeIfNeeded()
         display()
         orderOut(nil)
-        viewModel.present(recentWindows: [], initialIndex: 0, layout: AppSettings.shared.switcherLayout)
+        // The content stays: the first press then updates it instead of building it (~25 ms)
     }
 
     public func updateThumbnail(for windowId: CGWindowID, image: CGImage) {

@@ -9,6 +9,9 @@ public class AppDelegate: NSObject, NSApplicationDelegate, HotkeyManagerDelegate
     private var noNapActivity: NSObjectProtocol?
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
+        let launchStart = PerfLog.now()
+        defer { PerfLog.log("launch total", since: launchStart) }
+
         // Only one instance: a second launch tells the user and quits
         if isAnotherInstanceRunning() {
             showAlreadyRunningAlert()
@@ -26,8 +29,12 @@ public class AppDelegate: NSObject, NSApplicationDelegate, HotkeyManagerDelegate
             reason: "AltSwitch must react to the shortcut immediately"
         )
 
+        // First: the first contact with each app runs in the background while the overlay is
+        // built, so the order tracker and the prewarm below find the apps already answering
+        PerfLog.measure("launch warm up") { WindowManager.shared.warmUp() }
+
         // Initialize Overlay Panel
-        let panel = OverlayPanel()
+        let panel = PerfLog.measure("launch overlay panel") { OverlayPanel() }
         panel.onWindowChosen = { [weak self] item in
             self?.handleWindowSelection(item)
         }
@@ -37,10 +44,13 @@ public class AppDelegate: NSObject, NSApplicationDelegate, HotkeyManagerDelegate
         self.overlayPanel = panel
 
         // Initialize Status Bar Icon & Menu
-        statusBarController = StatusBarController()
+        statusBarController = PerfLog.measure("launch status bar") { StatusBarController() }
 
         // Set Hotkey Manager Delegate
         HotkeyManager.shared.delegate = self
+        HotkeyManager.shared.onTriggerModifierDown = {
+            WindowManager.shared.prepareForPress()
+        }
 
         // Check if onboarding / setup assistant is needed
         let needsSetup = !AppSettings.shared.hasCompletedSetup ||
@@ -51,17 +61,16 @@ public class AppDelegate: NSObject, NSApplicationDelegate, HotkeyManagerDelegate
         }
 
         // Start global hotkey tap
-        HotkeyManager.shared.start()
+        PerfLog.measure("launch hotkey tap") { HotkeyManager.shared.start() }
 
         // Keep recent window images so minimized windows still get a preview
-        WindowManager.shared.startThumbnailCaching()
+        PerfLog.measure("launch thumbnail caching") { WindowManager.shared.startThumbnailCaching() }
 
         // Order windows by last focus, not by the stacking order on screen
-        WindowOrderTracker.shared.start()
+        PerfLog.measure("launch order tracker") { WindowOrderTracker.shared.start() }
 
-        // Pay the first-use costs now instead of on the first shortcut press
-        WindowManager.shared.warmUp()
-        panel.prewarm()
+        // Pay the SwiftUI first-render cost now instead of on the first shortcut press
+        PerfLog.measure("launch prewarm overlay") { panel.prewarm() }
     }
 
     public func applicationWillTerminate(_ notification: Notification) {
@@ -95,8 +104,9 @@ public class AppDelegate: NSObject, NSApplicationDelegate, HotkeyManagerDelegate
 
     public func hotkeyTriggered(forward: Bool) {
         // The grouped list shows titles only: no previews to look up or capture
+        let pressStart = PerfLog.now()
         let showsCards = AppSettings.shared.switcherLayout.showsCards
-        let openWindows = WindowManager.shared.getOpenWindows()
+        let openWindows = PerfLog.measure("press window list") { WindowManager.shared.getOpenWindows() }
         let windows = showsCards ? WindowManager.shared.cachedThumbnails(for: openWindows) : openWindows
         guard !windows.isEmpty else {
             HotkeyManager.shared.isOverlayActive = false
@@ -113,7 +123,10 @@ public class AppDelegate: NSObject, NSApplicationDelegate, HotkeyManagerDelegate
         }
 
         HotkeyManager.shared.isOverlayActive = true
-        overlayPanel?.show(windows: windows, initialIndex: initialIndex)
+        PerfLog.logWhenFrameCommitted("press to overlay frame (\(windows.count) windows)", since: pressStart)
+        PerfLog.measure("press show overlay") {
+            overlayPanel?.show(windows: windows, initialIndex: initialIndex)
+        }
 
         // Load thumbnails asynchronously without blocking event tap or runloop
         if showsCards {

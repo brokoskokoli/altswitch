@@ -14,6 +14,15 @@ versions follow [Semantic Versioning](https://semver.org/).
   move by row, `←` `→` jump to the previous or next app. Choose it under *Layout* in the menu or
   in the setup assistant, or press `G` while the switcher is open to flip between cards and list.
 
+### Changed
+- **Faster:** the switcher opens about twice as fast (around 25 ms instead of 50–60 ms here with
+  30 windows, the first press after launch around 50 ms instead of 90–100 ms), in the cards and in
+  the grouped list. AltSwitch now asks all apps at once instead of one after the other, and gets
+  the list of running apps ready as soon as you press the modifier key.
+- **Faster start:** AltSwitch is ready about 2.5 times sooner after launch (around 120–160 ms
+  instead of 310–390 ms here), because it contacts all apps at once.
+- **Previews:** fresh window previews arrive about 2.5 times faster after the switcher opens.
+
 ### Fixed
 - **Missing windows:** windows on another desktop (Space), in full screen and of hidden apps (⌘H)
   now appear in the switcher, like on Windows. Before, AltSwitch only listed windows visible on
