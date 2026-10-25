@@ -17,6 +17,7 @@
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "Kompakt (fokus)";
 "layout.grid" = "Alla fönster (rutnät)";
+"layout.grouped" = "Grupperat per app (fönsterlista)";
 "alert.alreadyRunning.title" = "AltSwitch körs redan";
 "alert.alreadyRunning.message" = "Endast en instans av AltSwitch kan köras åt gången. Den instans som körs hittar du i menyraden.";
 "alert.ok" = "OK";
@@ -27,6 +28,8 @@
 "overlay.hint.navigate" = "Navigera";
 "overlay.hint.cancel" = "Avbryt";
 "overlay.hint.release" = "Släpp tangenten för att växla";
+"overlay.hint.showList" = "Lista per app";
+"overlay.hint.showCards" = "Förhandsvisningar";
 "card.screenRecordingRequired" = "Skärminspelning krävs";
 "card.loading" = "Läser in…";
 "setup.windowTitle" = "Välkommen till AltSwitch — Första inställning";

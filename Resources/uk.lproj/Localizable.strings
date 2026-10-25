@@ -17,6 +17,7 @@
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "Компактний (фокус)";
 "layout.grid" = "Усі вікна (сітка)";
+"layout.grouped" = "За програмами (список вікон)";
 "alert.alreadyRunning.title" = "AltSwitch уже запущено";
 "alert.alreadyRunning.message" = "Одночасно може працювати лише один екземпляр AltSwitch. Запущений екземпляр можна знайти на смузі меню.";
 "alert.ok" = "OK";
@@ -27,6 +28,8 @@
 "overlay.hint.navigate" = "Навігація";
 "overlay.hint.cancel" = "Скасувати";
 "overlay.hint.release" = "Відпустіть клавішу, щоб перемкнути";
+"overlay.hint.showList" = "Список за програмами";
+"overlay.hint.showCards" = "Мініатюри";
 "card.screenRecordingRequired" = "Потрібне записування екрана";
 "card.loading" = "Завантаження…";
 "setup.windowTitle" = "Вітаємо в AltSwitch — Початкове налаштування";

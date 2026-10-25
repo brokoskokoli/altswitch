@@ -17,6 +17,7 @@
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "Kompaktné (fokus)";
 "layout.grid" = "Všetky okná (mriežka)";
+"layout.grouped" = "Zoskupené podľa aplikácie (zoznam okien)";
 "alert.alreadyRunning.title" = "AltSwitch už beží";
 "alert.alreadyRunning.message" = "Naraz môže bežať iba jedna inštancia AltSwitch. Spustenú inštanciu nájdete na lište s ponukami.";
 "alert.ok" = "OK";
@@ -27,6 +28,8 @@
 "overlay.hint.navigate" = "Navigácia";
 "overlay.hint.cancel" = "Zrušiť";
 "overlay.hint.release" = "Uvoľnením klávesu prepnete";
+"overlay.hint.showList" = "Zoznam podľa aplikácie";
+"overlay.hint.showCards" = "Náhľady";
 "card.screenRecordingRequired" = "Vyžaduje sa nahrávanie obrazovky";
 "card.loading" = "Načítava sa…";
 "setup.windowTitle" = "Vitajte v AltSwitch — Úvodné nastavenie";

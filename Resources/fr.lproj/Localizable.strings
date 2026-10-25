@@ -17,6 +17,7 @@
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "Compact (focus)";
 "layout.grid" = "Toutes les fenêtres (grille)";
+"layout.grouped" = "Groupé par app (liste des fenêtres)";
 "alert.alreadyRunning.title" = "AltSwitch est déjà en cours d’exécution";
 "alert.alreadyRunning.message" = "Une seule instance d’AltSwitch peut s’exécuter à la fois. Vous trouverez l’instance en cours dans la barre des menus.";
 "alert.ok" = "OK";
@@ -27,6 +28,8 @@
 "overlay.hint.navigate" = "Naviguer";
 "overlay.hint.cancel" = "Annuler";
 "overlay.hint.release" = "Relâchez la touche pour basculer";
+"overlay.hint.showList" = "Liste par app";
+"overlay.hint.showCards" = "Aperçus";
 "card.screenRecordingRequired" = "Enregistrement de l’écran requis";
 "card.loading" = "Chargement…";
 "setup.windowTitle" = "Bienvenue dans AltSwitch — Configuration initiale";

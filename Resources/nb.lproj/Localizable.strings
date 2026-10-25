@@ -17,6 +17,7 @@
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "Kompakt (fokus)";
 "layout.grid" = "Alle vinduer (rutenett)";
+"layout.grouped" = "Gruppert etter app (vindusliste)";
 "alert.alreadyRunning.title" = "AltSwitch kjører allerede";
 "alert.alreadyRunning.message" = "Bare én forekomst av AltSwitch kan kjøre om gangen. Du finner forekomsten som kjører, i menylinjen.";
 "alert.ok" = "OK";
@@ -27,6 +28,8 @@
 "overlay.hint.navigate" = "Naviger";
 "overlay.hint.cancel" = "Avbryt";
 "overlay.hint.release" = "Slipp tasten for å bytte";
+"overlay.hint.showList" = "Liste etter app";
+"overlay.hint.showCards" = "Forhåndsvisninger";
 "card.screenRecordingRequired" = "Skjermopptak kreves";
 "card.loading" = "Laster inn…";
 "setup.windowTitle" = "Velkommen til AltSwitch — Førstegangsoppsett";

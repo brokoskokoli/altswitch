@@ -37,8 +37,10 @@ loslassen – und du bist im gewünschten Fenster.
 - **Jedes Fenster statt jedes Programms** – jedes offene Fenster bekommt eine eigene Karte mit
   App-Icon, Titel und Live-Vorschau.
 - **Zuletzt benutzt zuerst** – der erste Tab wählt das Fenster, das du vor dem aktuellen benutzt hast.
-- **Zwei Layouts** – ein kompaktes Karussell für den schnellen Wechsel oder ein Raster aller
-  Fenster (wie die Task View unter Windows) mit Pfeiltasten in beide Richtungen.
+- **Drei Layouts** – ein kompaktes Karussell für den schnellen Wechsel, ein Raster aller
+  Fenster (wie die Task View unter Windows) mit Pfeiltasten in beide Richtungen oder eine Liste
+  nach App gruppiert, mit den vollständigen Fenstertiteln (z. B. `file.swift — project`,
+  `user@host: ~/project — zsh`). `G` im Umschalter wechselt zwischen Karten und Liste.
 - **Dein Kurzbefehl** – `⌥-Tab` (Option-Tab) oder `⌘-Tab` (ersetzt den Programmumschalter),
   einstellbar im Menü.
 - **Tastatur oder Maus** – `⇧-Tab` oder kurz Shift antippen geht zurück, `Esc` bricht ab, ein
@@ -87,6 +89,8 @@ Beim ersten Start fragt der Einrichtungsassistent nach zwei Berechtigungen unter
 | Umschalter öffnen, nächstes Fenster | `⌥-Tab` oder `⌘-Tab` |
 | Weiter / zurück | `Tab` / `⇧-Tab` oder `⇧` antippen |
 | Im Karussell oder Raster bewegen | `←` `→` `↑` `↓` |
+| Gruppierte Liste: Zeile zurück / weiter, App zurück / weiter | `↑` `↓`, `←` `→` |
+| Karten ⇄ gruppierte Liste | `G` (bei offenem Umschalter) |
 | Zum gewählten Fenster wechseln | Modifier loslassen, `Return` oder `Leertaste` |
 | Per Maus wechseln | Karte anklicken |
 | Abbrechen | `Esc` |

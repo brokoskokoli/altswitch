@@ -17,6 +17,7 @@
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "Συμπαγής (εστίαση)";
 "layout.grid" = "Όλα τα παράθυρα (πλέγμα)";
+"layout.grouped" = "Ομαδοποίηση ανά εφαρμογή (λίστα παραθύρων)";
 "alert.alreadyRunning.title" = "Το AltSwitch εκτελείται ήδη";
 "alert.alreadyRunning.message" = "Μόνο ένα αντίγραφο του AltSwitch μπορεί να εκτελείται κάθε φορά. Θα βρείτε το αντίγραφο που εκτελείται στη γραμμή μενού.";
 "alert.ok" = "OK";
@@ -27,6 +28,8 @@
 "overlay.hint.navigate" = "Πλοήγηση";
 "overlay.hint.cancel" = "Ακύρωση";
 "overlay.hint.release" = "Αφήστε το πλήκτρο για εναλλαγή";
+"overlay.hint.showList" = "Λίστα ανά εφαρμογή";
+"overlay.hint.showCards" = "Προεπισκοπήσεις";
 "card.screenRecordingRequired" = "Απαιτείται Εγγραφή οθόνης";
 "card.loading" = "Φόρτωση…";
 "setup.windowTitle" = "Καλώς ορίσατε στο AltSwitch — Αρχική ρύθμιση";

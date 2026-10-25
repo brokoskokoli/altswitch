@@ -8,6 +8,8 @@ public protocol HotkeyManagerDelegate: AnyObject {
     func hotkeyTriggered(forward: Bool)
     func hotkeyCycle(forward: Bool)
     func hotkeyNavigate(direction: NavigationDirection)
+    /// G while the switcher is open: cards ⇄ grouped list
+    func hotkeyToggleLayout()
     func hotkeyConfirmed()
     func hotkeyCancelled()
 }
@@ -186,6 +188,12 @@ public class HotkeyManager {
                 case 125: // Down Arrow
                     DispatchQueue.main.async { [weak self] in
                         self?.delegate?.hotkeyNavigate(direction: .down)
+                    }
+                    return nil
+
+                case 5: // G (by position, so it works with any modifier held): toggle the view
+                    DispatchQueue.main.async { [weak self] in
+                        self?.delegate?.hotkeyToggleLayout()
                     }
                     return nil
 

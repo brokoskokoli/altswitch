@@ -17,6 +17,7 @@
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "精簡（聚焦）";
 "layout.grid" = "所有視窗（格狀總覽）";
+"layout.grouped" = "依 App 分組（視窗列表）";
 "alert.alreadyRunning.title" = "AltSwitch 已在執行中";
 "alert.alreadyRunning.message" = "同一時間只能執行一個 AltSwitch。你可以在選單列中找到正在執行的 AltSwitch。";
 "alert.ok" = "好";
@@ -27,6 +28,8 @@
 "overlay.hint.navigate" = "導覽";
 "overlay.hint.cancel" = "取消";
 "overlay.hint.release" = "放開按鍵以切換";
+"overlay.hint.showList" = "依 App 列出";
+"overlay.hint.showCards" = "預覽";
 "card.screenRecordingRequired" = "需要螢幕錄製權限";
 "card.loading" = "正在載入…";
 "setup.windowTitle" = "歡迎使用 AltSwitch — 初始設定";

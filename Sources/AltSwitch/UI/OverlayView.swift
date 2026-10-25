@@ -11,15 +11,70 @@ public enum NavigationDirection {
 }
 
 public class OverlayViewModel: ObservableObject {
+    /// Windows in navigation order: most recently used first for the cards, app by app for the
+    /// grouped list. `selectedIndex` points into this list.
     @Published public var windows: [WindowItem] = []
     @Published public var selectedIndex: Int = 0
     @Published public var isScreenRecordingGranted: Bool = false
     @Published public var gridColumns: Int = 3
+    /// Layout of the switcher on screen (can be toggled while it is open)
+    @Published public var layout: SwitcherLayout = AppSettings.shared.switcherLayout
+    /// Sections of the grouped list; empty in the card layouts
+    @Published public var groups: [WindowGroup] = []
+
+    /// All windows, most recently used first, independent of the layout
+    public private(set) var recentWindows: [WindowItem] = []
 
     public var onSelectWindow: ((WindowItem) -> Void)?
     public var onCancel: (() -> Void)?
 
     public init() {}
+
+    /// Shows `recent` (most recently used first) in `layout`. `initialIndex` refers to `recent`:
+    /// 1 is the window used before the current one, `recent.count - 1` the start for Shift-Tab.
+    public func present(recentWindows recent: [WindowItem], initialIndex: Int, layout: SwitcherLayout) {
+        recentWindows = recent
+        self.layout = layout
+        rebuildDisplayOrder()
+
+        guard !recent.isEmpty else {
+            selectedIndex = 0
+            return
+        }
+        let index = recent.indices.contains(initialIndex) ? initialIndex : 0
+        if index == recent.count - 1 && recent.count > 2 {
+            // Shift-Tab starts one step "back" from the current window: the end of the list
+            selectedIndex = windows.count - 1
+        } else {
+            // The grouped list orders by app, so the window used before the current one can sit
+            // anywhere in it: select it by identity, not by position
+            selectedIndex = windows.firstIndex(where: { $0.id == recent[index].id }) ?? 0
+        }
+    }
+
+    /// Switches the layout while the switcher is open and keeps the selected window selected
+    public func applyLayout(_ newLayout: SwitcherLayout) {
+        guard newLayout != layout else { return }
+        let selectedID = windows.indices.contains(selectedIndex) ? windows[selectedIndex].id : nil
+        layout = newLayout
+        rebuildDisplayOrder()
+        selectedIndex = selectedID.flatMap { id in windows.firstIndex(where: { $0.id == id }) } ?? 0
+    }
+
+    private func rebuildDisplayOrder() {
+        if layout == .grouped {
+            groups = WindowGroup.grouped(recentWindows)
+            windows = WindowGroup.flattened(groups)
+        } else {
+            groups = []
+            windows = recentWindows
+        }
+    }
+
+    /// Index of the group that contains the window at `index` in `windows`
+    private func groupIndex(containing index: Int) -> Int? {
+        groups.firstIndex { $0.indices.contains(index) }
+    }
 
     public func cycleNext() {
         guard !windows.isEmpty else { return }
@@ -33,7 +88,23 @@ public class OverlayViewModel: ObservableObject {
 
     public func navigate(direction: NavigationDirection) {
         guard !windows.isEmpty else { return }
-        switch AppSettings.shared.switcherLayout {
+        switch layout {
+        case .grouped:
+            switch direction {
+            case .up:
+                cyclePrevious()
+            case .down:
+                cycleNext()
+            case .left, .right:
+                // Jump to the first window of the previous / next app
+                guard !groups.isEmpty, let current = groupIndex(containing: selectedIndex) else {
+                    if direction == .left { cyclePrevious() } else { cycleNext() }
+                    return
+                }
+                let step = direction == .left ? -1 : 1
+                let target = (current + step + groups.count) % groups.count
+                selectedIndex = groups[target].startIndex
+            }
         case .compact:
             switch direction {
             case .left, .up:
@@ -108,6 +179,10 @@ public class OverlayViewModel: ObservableObject {
     public func updateThumbnail(for id: CGWindowID, image: CGImage) {
         if let idx = windows.firstIndex(where: { $0.id == id }) {
             windows[idx].thumbnail = image
+        }
+        // Kept for a switch from the grouped list back to the cards
+        if let idx = recentWindows.firstIndex(where: { $0.id == id }) {
+            recentWindows[idx].thumbnail = image
         }
     }
 }
@@ -185,8 +260,10 @@ struct OverlayView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 14)
 
-                // Window Cards Content: Grid or Carousel
-                if settings.switcherLayout == .grid {
+                // Content: grouped title list, grid of cards or carousel
+                if viewModel.layout == .grouped {
+                    GroupedWindowListView(viewModel: viewModel)
+                } else if viewModel.layout == .grid {
                     let columns = Array(
                         repeating: GridItem(.fixed(240), spacing: 14),
                         count: max(1, viewModel.gridColumns)
@@ -253,9 +330,10 @@ struct OverlayView: View {
                 // Footer: Keyboard Navigation Hints. Long translations drop the release hint first,
                 // then the navigation hints, instead of being cut off.
                 ViewThatFits(in: .horizontal) {
-                    footer(showNavigate: true, showRelease: true)
-                    footer(showNavigate: true, showRelease: false)
-                    footer(showNavigate: false, showRelease: false)
+                    footer(showNavigate: true, showToggle: true, showRelease: true)
+                    footer(showNavigate: true, showToggle: true, showRelease: false)
+                    footer(showNavigate: false, showToggle: true, showRelease: false)
+                    footer(showNavigate: false, showToggle: false, showRelease: false)
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 12)
@@ -275,12 +353,18 @@ struct OverlayView: View {
 }
 
 extension OverlayView {
-    private func footer(showNavigate: Bool, showRelease: Bool) -> some View {
+    private func footer(showNavigate: Bool, showToggle: Bool, showRelease: Bool) -> some View {
         HStack(spacing: 16) {
             HintView(key: "⇥", text: L("overlay.hint.next"))
             HintView(key: "⇧⇥ / ⇧", text: L("overlay.hint.back"))
             if showNavigate {
                 HintView(key: "← ↑ → ↓", text: L("overlay.hint.navigate"))
+            }
+            if showToggle {
+                HintView(
+                    key: "G",
+                    text: viewModel.layout == .grouped ? L("overlay.hint.showCards") : L("overlay.hint.showList")
+                )
             }
             HintView(key: "Esc", text: L("overlay.hint.cancel"))
             Spacer(minLength: 0)

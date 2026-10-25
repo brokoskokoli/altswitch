@@ -94,7 +94,10 @@ public class AppDelegate: NSObject, NSApplicationDelegate, HotkeyManagerDelegate
     // MARK: - HotkeyManagerDelegate
 
     public func hotkeyTriggered(forward: Bool) {
-        let windows = WindowManager.shared.cachedThumbnails(for: WindowManager.shared.getOpenWindows())
+        // The grouped list shows titles only: no previews to look up or capture
+        let showsCards = AppSettings.shared.switcherLayout.showsCards
+        let openWindows = WindowManager.shared.getOpenWindows()
+        let windows = showsCards ? WindowManager.shared.cachedThumbnails(for: openWindows) : openWindows
         guard !windows.isEmpty else {
             HotkeyManager.shared.isOverlayActive = false
             return
@@ -113,8 +116,27 @@ public class AppDelegate: NSObject, NSApplicationDelegate, HotkeyManagerDelegate
         overlayPanel?.show(windows: windows, initialIndex: initialIndex)
 
         // Load thumbnails asynchronously without blocking event tap or runloop
-        WindowManager.shared.loadThumbnailsAsync(for: windows) { [weak self] winId, image in
-            self?.overlayPanel?.updateThumbnail(for: winId, image: image)
+        if showsCards {
+            WindowManager.shared.loadThumbnailsAsync(for: windows) { [weak self] winId, image in
+                self?.overlayPanel?.updateThumbnail(for: winId, image: image)
+            }
+        }
+    }
+
+    public func hotkeyToggleLayout() {
+        guard let panel = overlayPanel, panel.isVisible else { return }
+        panel.toggleLayout()
+
+        // Opened in the grouped list: the cards still need their previews
+        guard AppSettings.shared.switcherLayout.showsCards else { return }
+        let windows = panel.presentedWindows
+        for item in WindowManager.shared.cachedThumbnails(for: windows) {
+            if let image = item.thumbnail {
+                panel.updateThumbnail(for: item.id, image: image)
+            }
+        }
+        WindowManager.shared.loadThumbnailsAsync(for: windows) { [weak panel] winId, image in
+            panel?.updateThumbnail(for: winId, image: image)
         }
     }
 

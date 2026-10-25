@@ -17,6 +17,7 @@
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "コンパクト（フォーカス）";
 "layout.grid" = "すべてのウインドウ（グリッド）";
+"layout.grouped" = "アプリ別（ウインドウ一覧）";
 "alert.alreadyRunning.title" = "AltSwitchはすでに実行中です";
 "alert.alreadyRunning.message" = "AltSwitchは同時に1つしか実行できません。実行中のAltSwitchはメニューバーにあります。";
 "alert.ok" = "OK";
@@ -27,6 +28,8 @@
 "overlay.hint.navigate" = "移動";
 "overlay.hint.cancel" = "キャンセル";
 "overlay.hint.release" = "キーを離すと切り替え";
+"overlay.hint.showList" = "アプリ別一覧";
+"overlay.hint.showCards" = "プレビュー";
 "card.screenRecordingRequired" = "画面収録が必要です";
 "card.loading" = "読み込み中…";
 "setup.windowTitle" = "AltSwitchへようこそ — 初期設定";

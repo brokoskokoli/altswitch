@@ -17,6 +17,7 @@
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "Kompakt (odak)";
 "layout.grid" = "Tüm pencereler (ızgara)";
+"layout.grouped" = "Uygulamaya göre gruplu (pencere listesi)";
 "alert.alreadyRunning.title" = "AltSwitch zaten çalışıyor";
 "alert.alreadyRunning.message" = "Aynı anda yalnızca bir AltSwitch kopyası çalışabilir. Çalışan kopyayı menü çubuğunda bulabilirsiniz.";
 "alert.ok" = "Tamam";
@@ -27,6 +28,8 @@
 "overlay.hint.navigate" = "Gezin";
 "overlay.hint.cancel" = "Vazgeç";
 "overlay.hint.release" = "Geçiş yapmak için tuşu bırakın";
+"overlay.hint.showList" = "Uygulamaya göre liste";
+"overlay.hint.showCards" = "Önizlemeler";
 "card.screenRecordingRequired" = "Ekran Kaydı gerekli";
 "card.loading" = "Yükleniyor…";
 "setup.windowTitle" = "AltSwitch’e hoş geldiniz — İlk kurulum";

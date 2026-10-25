@@ -58,9 +58,13 @@ public class OverlayPanel: NSPanel {
         return false
     }
 
+    /// Screen the switcher is shown on, kept for re-sizing it when the layout is toggled
+    private var currentScreen: NSScreen?
+
+    /// `windows` in most-recently-used order; `initialIndex` refers to that order (see
+    /// OverlayViewModel.present), the grouped layout re-orders them by app.
     public func show(windows: [WindowItem], initialIndex: Int) {
-        viewModel.windows = windows
-        viewModel.selectedIndex = (initialIndex >= 0 && initialIndex < windows.count) ? initialIndex : 0
+        viewModel.present(recentWindows: windows, initialIndex: initialIndex, layout: AppSettings.shared.switcherLayout)
         viewModel.isScreenRecordingGranted = PermissionsManager.shared.isScreenRecordingGranted
         // A pointer that happens to rest where the panel appears must not pick a card
         viewModel.noteKeyboardNavigation()
@@ -85,83 +89,115 @@ public class OverlayPanel: NSPanel {
 
         let activeScreen = targetScreen ?? NSScreen.main ?? NSScreen.screens.first
 
+        currentScreen = activeScreen
         if let screen = activeScreen {
-            let panelWidth: CGFloat
-            let panelHeight: CGFloat
-
-            if AppSettings.shared.switcherLayout == .grid {
-                // Multi-Column Raster / Task View: expands flexibly up to 88% width and 80% height
-                let maxGridWidth = screen.visibleFrame.width * 0.88
-                let maxGridHeight = screen.visibleFrame.height * 0.80
-
-                let cardW: CGFloat = 240
-                let cardH: CGFloat = 185
-                let spacing: CGFloat = 14
-                let overheadW: CGFloat = 72
-                let overheadH: CGFloat = 144
-
-                let count = windows.count
-                if count <= 0 {
-                    panelWidth = 400
-                    panelHeight = 220
-                } else {
-                    let maxCols = max(1, Int((maxGridWidth - overheadW + spacing) / (cardW + spacing)))
-                    let maxColsLimit = min(maxCols, 5)
-                    let cols: Int
-                    if count <= 3 {
-                        cols = max(1, count)
-                    } else if count == 4 {
-                        cols = min(maxColsLimit, 2)
-                    } else if count <= 6 {
-                        cols = min(maxColsLimit, 3)
-                    } else if count <= 8 {
-                        cols = min(maxColsLimit, 4)
-                    } else {
-                        cols = maxColsLimit
-                    }
-
-                    viewModel.gridColumns = cols
-                    let rows = Int(ceil(Double(count) / Double(cols)))
-
-                    let contentW = CGFloat(cols) * cardW + CGFloat(max(0, cols - 1)) * spacing + overheadW
-                    let contentH = CGFloat(rows) * cardH + CGFloat(max(0, rows - 1)) * spacing + overheadH
-
-                    panelWidth = max(min(contentW, maxGridWidth), 400)
-                    panelHeight = max(min(contentH, maxGridHeight), 330)
-                }
-            } else {
-                // Compact Carousel mode
-                let cardWidth: CGFloat = 240
-                let spacing: CGFloat = 14
-                let overheadW: CGFloat = 72
-                let totalCardsWidth = CGFloat(windows.count) * cardWidth + CGFloat(max(0, windows.count - 1)) * spacing + overheadW
-                let maxWidth = min(screen.visibleFrame.width * 0.90, 920)
-                panelWidth = max(min(totalCardsWidth, maxWidth), 400)
-                panelHeight = 330
-            }
-
-            let x = screen.visibleFrame.origin.x + (screen.visibleFrame.width - panelWidth) / 2
-            let y = screen.visibleFrame.origin.y + (screen.visibleFrame.height - panelHeight) / 2
-
-            self.setFrame(NSRect(x: x, y: y, width: panelWidth, height: panelHeight), display: true)
+            applyFrame(on: screen)
         }
 
         self.alphaValue = 1.0
         self.orderFrontRegardless()
     }
 
+    /// Windows in most-recently-used order, as passed to show(windows:initialIndex:)
+    public var presentedWindows: [WindowItem] {
+        viewModel.recentWindows
+    }
+
+    /// Switches between the cards and the grouped list while the switcher is open; the choice is
+    /// kept as the layout setting.
+    public func toggleLayout() {
+        AppSettings.shared.toggleCardsAndGroupedList()
+        viewModel.applyLayout(AppSettings.shared.switcherLayout)
+        if let screen = currentScreen ?? NSScreen.main {
+            applyFrame(on: screen)
+        }
+    }
+
+    /// Sizes and centers the panel for the current layout and windows on `screen`
+    private func applyFrame(on screen: NSScreen) {
+        let windows = viewModel.windows
+        let panelWidth: CGFloat
+        let panelHeight: CGFloat
+
+        if viewModel.layout == .grouped {
+            // Wide enough for the longest title (most fit in full), tall enough for all sections
+            let maxWidth = min(screen.visibleFrame.width * 0.8, 1200)
+            let maxHeight = screen.visibleFrame.height * 0.8
+            let overheadW: CGFloat = 72
+            let overheadH: CGFloat = 150
+            let longestRow = windows.map(GroupedListMetrics.rowWidth(for:)).max() ?? 0
+            let contentH = GroupedListMetrics.contentHeight(for: viewModel.groups)
+
+            panelWidth = max(min(longestRow + overheadW, maxWidth), 560)
+            panelHeight = max(min(contentH + overheadH, maxHeight), 260)
+        } else if viewModel.layout == .grid {
+            // Multi-Column Raster / Task View: expands flexibly up to 88% width and 80% height
+            let maxGridWidth = screen.visibleFrame.width * 0.88
+            let maxGridHeight = screen.visibleFrame.height * 0.80
+
+            let cardW: CGFloat = 240
+            let cardH: CGFloat = 185
+            let spacing: CGFloat = 14
+            let overheadW: CGFloat = 72
+            let overheadH: CGFloat = 144
+
+            let count = windows.count
+            if count <= 0 {
+                panelWidth = 400
+                panelHeight = 220
+            } else {
+                let maxCols = max(1, Int((maxGridWidth - overheadW + spacing) / (cardW + spacing)))
+                let maxColsLimit = min(maxCols, 5)
+                let cols: Int
+                if count <= 3 {
+                    cols = max(1, count)
+                } else if count == 4 {
+                    cols = min(maxColsLimit, 2)
+                } else if count <= 6 {
+                    cols = min(maxColsLimit, 3)
+                } else if count <= 8 {
+                    cols = min(maxColsLimit, 4)
+                } else {
+                    cols = maxColsLimit
+                }
+
+                viewModel.gridColumns = cols
+                let rows = Int(ceil(Double(count) / Double(cols)))
+
+                let contentW = CGFloat(cols) * cardW + CGFloat(max(0, cols - 1)) * spacing + overheadW
+                let contentH = CGFloat(rows) * cardH + CGFloat(max(0, rows - 1)) * spacing + overheadH
+
+                panelWidth = max(min(contentW, maxGridWidth), 400)
+                panelHeight = max(min(contentH, maxGridHeight), 330)
+            }
+        } else {
+            // Compact Carousel mode
+            let cardWidth: CGFloat = 240
+            let spacing: CGFloat = 14
+            let overheadW: CGFloat = 72
+            let totalCardsWidth = CGFloat(windows.count) * cardWidth + CGFloat(max(0, windows.count - 1)) * spacing + overheadW
+            let maxWidth = min(screen.visibleFrame.width * 0.90, 920)
+            panelWidth = max(min(totalCardsWidth, maxWidth), 400)
+            panelHeight = 330
+        }
+
+        let x = screen.visibleFrame.origin.x + (screen.visibleFrame.width - panelWidth) / 2
+        let y = screen.visibleFrame.origin.y + (screen.visibleFrame.height - panelHeight) / 2
+
+        self.setFrame(NSRect(x: x, y: y, width: panelWidth, height: panelHeight), display: true)
+    }
+
     /// Renders the overlay once, invisible and off screen: the first real shortcut press then skips
     /// SwiftUI's cold start (~200 ms).
     public func prewarm() {
-        viewModel.windows = WindowManager.shared.getOpenWindows()
-        viewModel.selectedIndex = 0
+        viewModel.present(recentWindows: WindowManager.shared.getOpenWindows(), initialIndex: 0, layout: AppSettings.shared.switcherLayout)
         alphaValue = 0
         setFrame(NSRect(x: -10000, y: -10000, width: 750, height: 330), display: false)
         orderFrontRegardless()
         contentView?.layoutSubtreeIfNeeded()
         display()
         orderOut(nil)
-        viewModel.windows = []
+        viewModel.present(recentWindows: [], initialIndex: 0, layout: AppSettings.shared.switcherLayout)
     }
 
     public func updateThumbnail(for windowId: CGWindowID, image: CGImage) {

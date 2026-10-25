@@ -138,6 +138,15 @@ public class StatusBarController: NSObject, NSMenuDelegate {
         gridItem.state = (currentLayout == .grid) ? .on : .off
         menu.addItem(gridItem)
 
+        let groupedItem = NSMenuItem(
+            title: "    " + SwitcherLayout.grouped.title,
+            action: #selector(selectGroupedLayout),
+            keyEquivalent: ""
+        )
+        groupedItem.target = self
+        groupedItem.state = (currentLayout == .grouped) ? .on : .off
+        menu.addItem(groupedItem)
+
         menu.addItem(NSMenuItem.separator())
 
         // 5. Autostart
@@ -238,6 +247,11 @@ public class StatusBarController: NSObject, NSMenuDelegate {
 
     @objc private func selectGridLayout() {
         AppSettings.shared.switcherLayout = .grid
+        rebuildMenu()
+    }
+
+    @objc private func selectGroupedLayout() {
+        AppSettings.shared.switcherLayout = .grouped
         rebuildMenu()
     }
 

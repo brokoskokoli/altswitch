@@ -17,6 +17,7 @@
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "Compact (focalizare)";
 "layout.grid" = "Toate ferestrele (grilă)";
+"layout.grouped" = "Grupat pe aplicații (listă de ferestre)";
 "alert.alreadyRunning.title" = "AltSwitch rulează deja";
 "alert.alreadyRunning.message" = "Poate rula o singură instanță AltSwitch la un moment dat. Instanța care rulează se află în bara de meniuri.";
 "alert.ok" = "OK";
@@ -27,6 +28,8 @@
 "overlay.hint.navigate" = "Navighează";
 "overlay.hint.cancel" = "Anulează";
 "overlay.hint.release" = "Eliberează tasta pentru a comuta";
+"overlay.hint.showList" = "Listă pe aplicații";
+"overlay.hint.showCards" = "Previzualizări";
 "card.screenRecordingRequired" = "Este necesară înregistrarea ecranului";
 "card.loading" = "Se încarcă…";
 "setup.windowTitle" = "Bun venit în AltSwitch — Configurare inițială";
