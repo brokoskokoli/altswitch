@@ -43,8 +43,8 @@ loslassen – und du bist im gewünschten Fenster.
   einstellbar im Menü.
 - **Tastatur oder Maus** – `⇧-Tab` oder kurz Shift antippen geht zurück, `Esc` bricht ab, ein
   einzelner Klick aktiviert eine Karte.
-- **Minimierte Fenster** sind dabei, mit Badge markiert, und werden beim Auswählen
-  wiederhergestellt.
+- **Jedes Fenster** – auch minimierte (mit Badge markiert, beim Auswählen wiederhergestellt),
+  Fenster auf anderen Schreibtischen (Spaces) oder im Vollbild und Fenster ausgeblendeter Apps.
 - **25 Sprachen** – folgt der macOS-Sprache oder der im Menü gewählten (Sprache).
 - **Menüleisten-App** – kein Dock-Icon, ein Einrichtungsassistent für die macOS-Berechtigungen,
   auf Wunsch Start beim Anmelden.

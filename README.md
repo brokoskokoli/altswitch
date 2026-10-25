@@ -41,7 +41,8 @@ window you wanted.
 - **Your shortcut** – `⌥-Tab` (Option-Tab) or `⌘-Tab` (replaces the app switcher), set in the menu.
 - **Keyboard or mouse** – `⇧-Tab` or a tap on Shift goes back, `Esc` cancels, a single click
   activates a card.
-- **Minimized windows** included, marked with a badge, restored when you pick them.
+- **Every window** – minimized ones (marked with a badge, restored when you pick them), windows on
+  other desktops (Spaces) or in full screen, and windows of hidden apps.
 - **25 languages** – follows the macOS language or the one you pick in the menu (Language).
 - **Menu bar app** – no Dock icon, a setup assistant for the macOS permissions, optional start at
   login.

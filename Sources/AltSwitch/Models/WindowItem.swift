@@ -12,6 +12,9 @@ public struct WindowItem: Identifiable, Equatable {
     public var thumbnail: CGImage?
     public let isMinimized: Bool
     public let runningApp: NSRunningApplication?
+    /// False for windows that cannot be seen right now: minimized, on another Space (also native
+    /// full screen) or of a hidden app. They cannot be captured, so the cached image is shown.
+    public let isOnScreen: Bool
 
     public init(
         id: CGWindowID,
@@ -22,7 +25,8 @@ public struct WindowItem: Identifiable, Equatable {
         appIcon: NSImage?,
         thumbnail: CGImage?,
         isMinimized: Bool = false,
-        runningApp: NSRunningApplication? = nil
+        runningApp: NSRunningApplication? = nil,
+        isOnScreen: Bool = true
     ) {
         self.id = id
         self.pid = pid
@@ -33,6 +37,7 @@ public struct WindowItem: Identifiable, Equatable {
         self.thumbnail = thumbnail
         self.isMinimized = isMinimized
         self.runningApp = runningApp
+        self.isOnScreen = isOnScreen
     }
 
     public static func == (lhs: WindowItem, rhs: WindowItem) -> Bool {

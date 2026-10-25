@@ -6,6 +6,12 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- **Missing windows:** windows on another desktop (Space), in full screen and of hidden apps (⌘H)
+  now appear in the switcher, like on Windows. Before, AltSwitch only listed windows visible on
+  the current desktop plus minimized ones, so an app such as VS Code could be missing entirely.
+  Picking such a window switches to its desktop or shows the app again.
+
 ## [1.1.3] - 2026-10-19
 
 ### Fixed
