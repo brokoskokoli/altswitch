@@ -108,6 +108,11 @@ Tastatureingabe* ist an. macOS gibt Tastendrücke dann an keine andere App weite
 AltSwitch. Das AltSwitch-Menü zeigt das an, solange es so ist; verlasse das Passwortfeld oder
 schalte die Option aus.
 
+**Eine virtuelle Maschine oder Fernsitzung bekommt `⌥-Tab` / `⌘-Tab` nicht.** AltSwitch fängt
+den Kurzbefehl ab, bevor eine App ihn sieht – auch wenn eine VM (Parallels, VMware, UTM) oder ein
+Remote-Desktop vorne ist; in einem Windows-Gast ist `⌥-Tab` gerade Alt-Tab. Stell AltSwitch im Menü
+auf den anderen Kurzbefehl um oder beende es, solange du im Gast arbeitest.
+
 **Etwas anderes klappt nicht.** *Diagnose kopieren* im AltSwitch-Menü kopiert Version,
 Berechtigungen und Zustand (ohne Fenstertitel und App-Namen) für einen
 [Fehlerbericht](https://github.com/brokoskokoli/altswitch/issues/new/choose).

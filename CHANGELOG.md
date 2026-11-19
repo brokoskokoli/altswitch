@@ -6,6 +6,17 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- **Less memory and CPU in the background:** after an app switch only the windows of the app you
+  left are captured for the previews, not every window on screen. Each capture loses 176 bytes
+  inside macOS (`CGWindowListCreateImage`), which added up to a few MB a day; it is now about a
+  fifteenth.
+- **Copy Diagnostics** no longer asks every app for its windows (it could hang on a busy app) and
+  tells which private macOS calls are available.
+
+### Added
+- README: why a virtual machine or remote desktop does not get `⌥-Tab` / `⌘-Tab`.
+
 ## [1.3.0] - 2026-11-19
 
 ### Added

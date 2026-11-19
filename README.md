@@ -104,6 +104,11 @@ entry* on – a focused password field, or *Terminal → Secure Keyboard Entry*.
 presses to no other app, AltSwitch included. The AltSwitch menu says so while it is on; leave the
 password field or turn the option off.
 
+**A virtual machine or remote session does not get `⌥-Tab` / `⌘-Tab`.** AltSwitch takes the
+shortcut before any app sees it, also when a VM (Parallels, VMware, UTM) or a remote desktop is in
+front – in a Windows guest `⌥-Tab` is Alt-Tab. Switch AltSwitch to the other shortcut in its menu,
+or quit it while you work in the guest.
+
 **Something else is wrong.** *Copy Diagnostics* in the AltSwitch menu copies version, permissions
 and state (no window titles or app names) for a
 [bug report](https://github.com/brokoskokoli/altswitch/issues/new/choose).

@@ -188,6 +188,6 @@ public class AppDelegate: NSObject, NSApplicationDelegate, HotkeyManagerDelegate
     }
 
     private func handleWindowSelection(_ item: WindowItem) {
-        WindowManager.shared.activateWindow(item)
+        PerfLog.measure("press activate") { WindowManager.shared.activateWindow(item) }
     }
 }

@@ -57,6 +57,13 @@ private enum SkyLight {
     private static let setFrontProcessWithOptions = symbol("_SLPSSetFrontProcessWithOptions", SetFrontProcessWithOptionsFunc.self)
     private static let postEventRecordTo = symbol("SLPSPostEventRecordTo", PostEventRecordToFunc.self)
 
+    /// Which of the private calls this macOS has, for the diagnostics
+    static var availability: String {
+        let spaces = connection != nil && copySpacesForWindows != nil && copyManagedDisplaySpaces != nil
+        let focus = getProcessForPID != nil && setFrontProcessWithOptions != nil && postEventRecordTo != nil
+        return "Spaces \(spaces ? "yes" : "no"), focus across Spaces \(focus ? "yes" : "no")"
+    }
+
     /// Spaces shown right now, one per display; nil if unknown.
     static func currentSpaces() -> Set<UInt64>? {
         guard let connection = connection, let copy = copyManagedDisplaySpaces,
@@ -145,12 +152,24 @@ public class WindowManager {
     private let cacheQueue = DispatchQueue(label: "AltSwitch.thumbnailCache", qos: .utility)
     private let maxCachedThumbnailWidth = 520
     private var lastBackgroundRefresh = Date.distantPast
+    /// The app in front before the last app switch. Main thread only.
+    private var frontmostPID = NSWorkspace.shared.frontmostApplication?.processIdentifier
     private var lastPrepareForPress = Date.distantPast
     /// Regular apps as read by prepareForPress, for the next press only. Main thread only.
     private var preparedRegularApps: (apps: [NSRunningApplication], time: CFTimeInterval)?
     /// App icons by process. Loading an icon takes ~0.1–2 ms and the overlay needs one per window
     /// on every press. Main thread only.
     private var iconCache: [pid_t: NSImage] = [:]
+    /// PIDs of the regular apps from the last window list, so the background capture after every
+    /// app switch does not ask LaunchServices about all processes again (~20 ms). Main thread only.
+    private var lastRegularPIDs: (pids: Set<pid_t>, time: CFTimeInterval)?
+    /// Size of the last window list (windows, apps), for the diagnostics
+    public private(set) var lastListSize: (windows: Int, apps: Int)?
+
+    /// Which private calls are available on this macOS, for the diagnostics
+    public static var privateCallsAvailability: String {
+        "\(SkyLight.availability), window IDs \(dynamicAXUIElementGetWindow != nil ? "yes" : "no")"
+    }
 
     private init() {
         // Refresh the cache whenever the user switches apps: a window minimized afterwards
@@ -160,9 +179,13 @@ public class WindowManager {
             object: nil,
             queue: .main
         ) { [weak self] note in
-            self?.refreshThumbnailCacheInBackground()
-            if let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication {
-                self?.warmUp([app])
+            guard let self = self else { return }
+            let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
+            let left = self.frontmostPID
+            self.frontmostPID = app?.processIdentifier
+            self.refreshThumbnailCacheInBackground(activated: app, left: left)
+            if let app = app {
+                self.warmUp([app])
             }
         }
         // A new process may get the same PID
@@ -262,6 +285,7 @@ public class WindowManager {
         }
 
         let regularApps = takeRegularApps()
+        lastRegularPIDs = (Set(regularApps.map(\.processIdentifier)), CACurrentMediaTime())
         var appByPID: [pid_t: NSRunningApplication] = [:]
         for app in regularApps {
             appByPID[app.processIdentifier] = app
@@ -313,13 +337,12 @@ public class WindowManager {
         var included = Set<CGWindowID>()
 
         for winInfo in infoList {
-            guard let layer = winInfo[kCGWindowLayer as String] as? Int, layer == 0,
+            guard let layer = winInfo[kCGWindowLayer as String] as? Int,
                   let wid = winInfo[kCGWindowNumber as String] as? CGWindowID,
                   let pid = winInfo[kCGWindowOwnerPID as String] as? pid_t,
                   let app = appByPID[pid],
                   let boundsDict = winInfo[kCGWindowBounds as String] as? [String: Any],
-                  let bounds = CGRect(dictionaryRepresentation: boundsDict as CFDictionary),
-                  bounds.width >= 80, bounds.height >= 80 else {
+                  let bounds = CGRect(dictionaryRepresentation: boundsDict as CFDictionary) else {
                 continue
             }
 
@@ -327,29 +350,25 @@ public class WindowManager {
             let cgTitle = ((winInfo[kCGWindowName as String] as? String) ?? "")
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             let isVisible = winInfo[kCGWindowIsOnscreen as String] as? Bool ?? false
-            var isMinimized = false
-
-            if isVisible {
-                // Nearly transparent: an invisible helper window. A real window that is just
-                // fading in or out stays, Accessibility knows it.
-                let alpha = winInfo[kCGWindowAlpha as String] as? Double ?? 1.0
-                guard alpha >= 0.05 || ax?.isStandard == true else { continue }
-            } else if let ax = ax {
-                // Off screen and known to the app: minimized, hidden app (⌘H) or another Space
-                if ax.isMinimized {
-                    isMinimized = true
-                } else {
-                    guard ax.isStandard, app.isHidden || isOnOtherSpace(wid) else { continue }
-                }
-            } else {
-                // Accessibility does not list windows on other Spaces. Off-screen windows without a
-                // title or not on any Space are helpers (menu bar, status items, drag images …).
-                guard !cgTitle.isEmpty,
-                      !completeAXPIDs.contains(pid) || isOnOtherSpace(wid),
-                      let spaces = SkyLight.spaces(of: wid), !spaces.isEmpty else {
-                    continue
-                }
+            let entry = WindowFilter.Entry(
+                layer: layer,
+                bounds: bounds,
+                isOnscreen: isVisible,
+                alpha: winInfo[kCGWindowAlpha as String] as? Double ?? 1.0,
+                title: cgTitle
+            )
+            let decision = WindowFilter.decide(
+                entry,
+                ax: ax.map { WindowFilter.AXFacts(isStandard: $0.isStandard, isMinimized: $0.isMinimized) },
+                appIsHidden: app.isHidden,
+                appListComplete: completeAXPIDs.contains(pid),
+                isOnOtherSpace: { isOnOtherSpace(wid) },
+                isOnAnySpace: { !(SkyLight.spaces(of: wid) ?? []).isEmpty }
+            )
+            if decision == .skip {
+                continue
             }
+            let isMinimized = decision == .minimized
 
             let appName = (winInfo[kCGWindowOwnerName as String] as? String) ?? app.localizedName ?? "App"
             var title = cgTitle
@@ -409,9 +428,11 @@ public class WindowManager {
             }
         }
 
+        let all = onScreen + offScreen
+        lastListSize = (all.count, Set(all.map(\.pid)).count)
         // Screen stacking order groups windows by app (activating an app raises all its windows):
         // order by when each window last had focus instead
-        return WindowOrderTracker.shared.sortedByRecentUse(onScreen + offScreen, regularApps: regularApps)
+        return WindowOrderTracker.shared.sortedByRecentUse(all, regularApps: regularApps)
     }
 
     /// The app's windows with the attributes needed to sort out junk, one Accessibility round trip
@@ -511,26 +532,44 @@ public class WindowManager {
         }
     }
 
-    /// Captures all on-screen windows into the cache (throttled, low priority).
-    private func refreshThumbnailCacheInBackground() {
-        guard Date().timeIntervalSince(lastBackgroundRefresh) > 2.0,
+    /// Captures on-screen windows into the cache (throttled, low priority). After an app switch
+    /// (`left`: the app in front before) only the windows of the app left and windows without an
+    /// image yet: the others did not have focus, so their image is mostly still current. Every
+    /// capture costs ~10 ms of CPU and leaks 176 bytes inside macOS (CGWindowListCreateImage hands
+    /// over to ScreenCaptureKit and does not free a dictionary; seen up to macOS 27).
+    /// `activated`: the app the user just switched to.
+    private func refreshThumbnailCacheInBackground(activated: NSRunningApplication? = nil, left: pid_t? = nil) {
+        guard Date().timeIntervalSince(lastBackgroundRefresh) > (left == nil ? 2.0 : 0.5),
               PermissionsManager.shared.isScreenRecordingGranted,
               let createImage = dynamicCGWindowListCreateImage else {
             return
         }
         lastBackgroundRefresh = Date()
 
+        // The apps of the last window list plus the one just activated (it may have been
+        // launched since); after a while without a press, all apps are read again
+        var knownPIDs: Set<pid_t>?
+        if let last = lastRegularPIDs, CACurrentMediaTime() - last.time < 300 {
+            knownPIDs = last.pids
+            if let app = activated, app.activationPolicy == .regular {
+                knownPIDs?.insert(app.processIdentifier)
+            }
+        }
+
         DispatchQueue.global(qos: .utility).async { [weak self] in
             guard let self = self,
                   let infoList = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else {
                 return
             }
+            let start = PerfLog.now()
+            defer { PerfLog.log("background capture", since: start) }
             let currentPID = NSRunningApplication.current.processIdentifier
             // Only apps the switcher lists: windows of background agents and helpers would be
             // captured and kept for nothing
-            let regularPIDs = Set(NSWorkspace.shared.runningApplications
+            let regularPIDs = knownPIDs ?? Set(NSWorkspace.shared.runningApplications
                 .filter { $0.activationPolicy == .regular && $0.processIdentifier != currentPID }
                 .map(\.processIdentifier))
+            let cachedIDs = left == nil ? [] : self.cacheQueue.sync { Set(self.thumbnailCache.keys) }
             var visibleIds: [CGWindowID] = []
             for winInfo in infoList {
                 guard let layer = winInfo[kCGWindowLayer as String] as? Int, layer == 0,
@@ -542,6 +581,9 @@ public class WindowManager {
                     continue
                 }
                 visibleIds.append(wid)
+                if left != nil, pid != left, cachedIDs.contains(wid) {
+                    continue
+                }
                 if let image = createImage(.null, [.optionIncludingWindow], wid, [.nominalResolution, .boundsIgnoreFraming])?.takeRetainedValue() {
                     self.storeInCache(image, for: wid)
                 }

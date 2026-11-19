@@ -23,8 +23,9 @@ enum Diagnostics {
         arch = "x86_64"
         #endif
 
-        let windows = WindowManager.shared.getOpenWindows()
-        let apps = Set(windows.map(\.pid)).count
+        // From the last list: asking all apps again could hang on one that does not answer
+        let listed = WindowManager.shared.lastListSize.map { "\($0.windows) from \($0.apps) apps (last list)" }
+            ?? "not yet"
         let settings = AppSettings.shared
 
         return """
@@ -37,7 +38,8 @@ enum Diagnostics {
         Event tap re-enabled by macOS since launch: \(HotkeyManager.shared.tapReenables)
         Secure keyboard entry on: \(isSecureInputEnabled ? "yes" : "no")
         Shortcut: \(settings.shortcutMode.rawValue), layout: \(settings.switcherLayout.rawValue)
-        Windows listed: \(windows.count) from \(apps) apps
+        Windows listed: \(listed)
+        Private calls: \(WindowManager.privateCallsAvailability)
         Displays: \(NSScreen.screens.count)
         """
     }
