@@ -713,6 +713,33 @@ public class WindowManager {
         }
     }
 
+    /// Presses the window's close button, as a click on it would: the app may still ask whether to
+    /// save. Returns false if the window or its close button cannot be reached (e.g. on another Space).
+    public func closeWindow(_ item: WindowItem) -> Bool {
+        let appElement = AXUIElementCreateApplication(item.pid)
+        AXUIElementSetMessagingTimeout(appElement, 0.25)
+        var windowListValue: AnyObject?
+        guard AXUIElementCopyAttributeValue(appElement, kAXWindowsAttribute as CFString, &windowListValue) == .success,
+              let axWindows = windowListValue as? [AXUIElement],
+              let window = axWindow(withID: item.id, in: axWindows) else {
+            return false
+        }
+        var buttonValue: AnyObject?
+        guard AXUIElementCopyAttributeValue(window, kAXCloseButtonAttribute as CFString, &buttonValue) == .success,
+              let buttonRef = buttonValue, CFGetTypeID(buttonRef) == AXUIElementGetTypeID() else {
+            return false
+        }
+        return AXUIElementPerformAction(buttonRef as! AXUIElement, kAXPressAction as CFString) == .success
+    }
+
+    /// Whether the window server still has the window (closing may take a moment or wait for a dialog)
+    public func windowExists(_ id: CGWindowID) -> Bool {
+        guard let info = CGWindowListCopyWindowInfo([.optionIncludingWindow], id) as? [[String: Any]] else {
+            return false
+        }
+        return !info.isEmpty
+    }
+
     private func axWindow(withID id: CGWindowID, in windows: [AXUIElement]) -> AXUIElement? {
         guard let getWindow = dynamicAXUIElementGetWindow else { return nil }
         return windows.first { axWin in

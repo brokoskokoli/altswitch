@@ -43,6 +43,10 @@ public class OverlayPanel: NSPanel {
             self?.hide()
         }
 
+        viewModel.onCloseWindow = { [weak self] item in
+            self?.close(item)
+        }
+
         let view = OverlayView(viewModel: viewModel)
         let hosting = ClickableHostingView(rootView: view)
         hosting.autoresizingMask = [.width, .height]
@@ -96,6 +100,75 @@ public class OverlayPanel: NSPanel {
 
         self.alphaValue = 1.0
         self.orderFrontRegardless()
+        startFrameTimer()
+    }
+
+    // MARK: - Pointer and keys while open
+
+    /// Key code of Q by position (ANSI layout), so it is the same key with any keyboard layout
+    private static let quickCloseKeyCode: CGKeyCode = 12
+
+    private var frameTimer: Timer?
+    private var lastFrameTime: CFTimeInterval = 0
+
+    /// Edge scrolling and the quick-close key, checked every frame while the switcher is open. The
+    /// key is read from the keyboard state: the event tap swallows the key presses themselves.
+    private func startFrameTimer() {
+        frameTimer?.invalidate()
+        lastFrameTime = CACurrentMediaTime()
+        let timer = Timer(timeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
+            self?.frameTick()
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        frameTimer = timer
+    }
+
+    private func stopFrameTimer() {
+        frameTimer?.invalidate()
+        frameTimer = nil
+        if viewModel.isCloseKeyHeld {
+            viewModel.isCloseKeyHeld = false
+        }
+    }
+
+    private func frameTick() {
+        let now = CACurrentMediaTime()
+        // Capped, so a stalled main thread does not make the list jump afterwards
+        let elapsed = min(now - lastFrameTime, 0.05)
+        lastFrameTime = now
+
+        let closeKeyHeld = AppSettings.shared.quickCloseEnabled
+            && CGEventSource.keyState(.hidSystemState, key: Self.quickCloseKeyCode)
+        if closeKeyHeld != viewModel.isCloseKeyHeld {
+            viewModel.isCloseKeyHeld = closeKeyHeld
+        }
+
+        // A pointer that has not moved since the switcher opened or since the last arrow key must
+        // not scroll the list away from the keyboard selection
+        if !viewModel.isPointerResting {
+            viewModel.edgeScroller.step(pointer: NSEvent.mouseLocation, elapsed: elapsed)
+        }
+    }
+
+    /// Closes `item` through its close button and takes the card away once the window is gone. If
+    /// the app asks first (unsaved changes), the card stays until the window really closes.
+    private func close(_ item: WindowItem) {
+        guard WindowManager.shared.closeWindow(item) else {
+            NSSound.beep()
+            return
+        }
+        removeWhenClosed(item.id, checksLeft: 8)
+    }
+
+    private func removeWhenClosed(_ id: CGWindowID, checksLeft: Int) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { [weak self] in
+            guard let self = self, self.isVisible else { return }
+            if !WindowManager.shared.windowExists(id) {
+                self.viewModel.removeWindow(id: id)
+            } else if checksLeft > 1 {
+                self.removeWhenClosed(id, checksLeft: checksLeft - 1)
+            }
+        }
     }
 
     /// Windows in most-recently-used order, as passed to show(windows:initialIndex:)
@@ -209,6 +282,7 @@ public class OverlayPanel: NSPanel {
     }
 
     public func hide() {
+        stopFrameTimer()
         self.orderOut(nil)
         onDismissed?()
     }

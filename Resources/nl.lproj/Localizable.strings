@@ -53,3 +53,6 @@
 "setup.autostart.detail" = "AltSwitch draait onopvallend in de menubalk.";
 "setup.later" = "Later configureren";
 "setup.finish" = "Voltooien en beginnen";
+"menu.quickClose" = "Q + klik sluit vensters";
+"overlay.hint.closeKey" = "Q + klik";
+"overlay.hint.close" = "Sluiten";

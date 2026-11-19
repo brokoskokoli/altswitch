@@ -53,3 +53,6 @@
 "setup.autostart.detail" = "AltSwitch s’exécute discrètement dans la barre des menus.";
 "setup.later" = "Configurer plus tard";
 "setup.finish" = "Terminer et commencer";
+"menu.quickClose" = "Q + clic ferme les fenêtres";
+"overlay.hint.closeKey" = "Q + clic";
+"overlay.hint.close" = "Fermer";

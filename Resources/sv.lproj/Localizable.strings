@@ -53,3 +53,6 @@
 "setup.autostart.detail" = "AltSwitch körs diskret i menyraden.";
 "setup.later" = "Ställ in senare";
 "setup.finish" = "Slutför och börja";
+"menu.quickClose" = "Q + klick stänger fönster";
+"overlay.hint.closeKey" = "Q + klick";
+"overlay.hint.close" = "Stäng";

@@ -53,3 +53,6 @@
 "setup.autostart.detail" = "AltSwitch menü çubuğunda göze batmadan çalışır.";
 "setup.later" = "Daha sonra ayarla";
 "setup.finish" = "Bitir ve başla";
+"menu.quickClose" = "Q + tıklama pencereleri kapatır";
+"overlay.hint.closeKey" = "Q + tıklama";
+"overlay.hint.close" = "Kapat";

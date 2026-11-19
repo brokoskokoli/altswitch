@@ -53,3 +53,6 @@
 "setup.autostart.detail" = "AltSwitch kører diskret på menulinjen.";
 "setup.later" = "Indstil senere";
 "setup.finish" = "Afslut og kom i gang";
+"menu.quickClose" = "Q + klik lukker vinduer";
+"overlay.hint.closeKey" = "Q + klik";
+"overlay.hint.close" = "Luk";

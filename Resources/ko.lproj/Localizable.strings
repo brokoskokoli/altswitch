@@ -53,3 +53,6 @@
 "setup.autostart.detail" = "AltSwitch는 메뉴 막대에서 눈에 띄지 않게 실행됩니다.";
 "setup.later" = "나중에 설정";
 "setup.finish" = "완료하고 시작하기";
+"menu.quickClose" = "Q + 클릭으로 윈도우 닫기";
+"overlay.hint.closeKey" = "Q + 클릭";
+"overlay.hint.close" = "닫기";

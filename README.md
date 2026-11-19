@@ -90,6 +90,8 @@ Security*:
 | Cards ⇄ grouped list | `G` (while the switcher is open) |
 | Switch to the selected window | release the modifier, `Return` or `Space` |
 | Switch by mouse | click a card |
+| Close a window | hold `Q` and click its card (can be turned off in the menu) |
+| Scroll a long list | move the pointer to its top or bottom edge – the closer to the edge, the faster |
 | Cancel | `Esc` |
 
 While the switcher is open, other keys and shortcuts – of apps and of macOS – do nothing: `⌘Q` out

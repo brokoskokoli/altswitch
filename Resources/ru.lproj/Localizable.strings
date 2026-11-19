@@ -53,3 +53,6 @@
 "setup.autostart.detail" = "AltSwitch незаметно работает в строке меню.";
 "setup.later" = "Настроить позже";
 "setup.finish" = "Готово, начать";
+"menu.quickClose" = "Q + щелчок закрывает окна";
+"overlay.hint.closeKey" = "Q + щелчок";
+"overlay.hint.close" = "Закрыть";

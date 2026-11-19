@@ -53,3 +53,6 @@
 "setup.autostart.detail" = "Το AltSwitch εκτελείται διακριτικά στη γραμμή μενού.";
 "setup.later" = "Ρύθμιση αργότερα";
 "setup.finish" = "Ολοκλήρωση και έναρξη";
+"menu.quickClose" = "Q + κλικ κλείνει παράθυρα";
+"overlay.hint.closeKey" = "Q + κλικ";
+"overlay.hint.close" = "Κλείσιμο";

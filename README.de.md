@@ -93,6 +93,8 @@ Beim ersten Start fragt der Einrichtungsassistent nach zwei Berechtigungen unter
 | Karten ⇄ gruppierte Liste | `G` (bei offenem Umschalter) |
 | Zum gewählten Fenster wechseln | Modifier loslassen, `Return` oder `Leertaste` |
 | Per Maus wechseln | Karte anklicken |
+| Fenster schließen | `Q` halten und Karte anklicken (im Menü abschaltbar) |
+| Lange Liste scrollen | Mauszeiger an den oberen oder unteren Rand – je näher am Rand, desto schneller |
 | Abbrechen | `Esc` |
 
 Bei offenem Umschalter bewirken andere Tasten und Kurzbefehle – von Apps wie von macOS – nichts:

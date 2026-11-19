@@ -7,6 +7,8 @@ struct WindowCardView: View {
     let item: WindowItem
     let isSelected: Bool
     let isScreenRecordingGranted: Bool
+    /// The quick-close key is held over this card: a click closes the window
+    var showsCloseMark = false
     let onSelect: () -> Void
     let onHover: () -> Void
     // Re-render when the UI language changes
@@ -147,6 +149,12 @@ struct WindowCardView: View {
                 x: 0,
                 y: 2
             )
+            .overlay(alignment: .topTrailing) {
+                if showsCloseMark {
+                    CloseMark()
+                        .offset(x: 6, y: -6)
+                }
+            }
             .scaleEffect(isSelected ? 1.02 : 1.0)
             .animation(.spring(response: 0.25, dampingFraction: 0.75), value: isSelected)
             .contentShape(Rectangle())
@@ -157,5 +165,18 @@ struct WindowCardView: View {
                 onHover()
             }
         }
+    }
+}
+
+/// Red close badge on the card or row a click would close
+struct CloseMark: View {
+    var size: CGFloat = 22
+
+    var body: some View {
+        Image(systemName: "xmark.circle.fill")
+            .font(.system(size: size))
+            .symbolRenderingMode(.palette)
+            .foregroundStyle(.white, Color.red)
+            .shadow(color: .black.opacity(0.35), radius: 3, y: 1)
     }
 }

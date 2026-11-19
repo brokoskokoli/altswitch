@@ -53,3 +53,6 @@
 "setup.autostart.detail" = "Az AltSwitch észrevétlenül fut a menüsorban.";
 "setup.later" = "Beállítás később";
 "setup.finish" = "Befejezés és kezdés";
+"menu.quickClose" = "Q + kattintás bezárja az ablakot";
+"overlay.hint.closeKey" = "Q + kattintás";
+"overlay.hint.close" = "Bezárás";

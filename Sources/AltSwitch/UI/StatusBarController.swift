@@ -165,6 +165,15 @@ public class StatusBarController: NSObject, NSMenuDelegate {
         autostartItem.state = AutostartManager.shared.isAutostartEnabled ? .on : .off
         menu.addItem(autostartItem)
 
+        let quickCloseItem = NSMenuItem(
+            title: L("menu.quickClose"),
+            action: #selector(toggleQuickClose),
+            keyEquivalent: ""
+        )
+        quickCloseItem.target = self
+        quickCloseItem.state = AppSettings.shared.quickCloseEnabled ? .on : .off
+        menu.addItem(quickCloseItem)
+
         // 6. Language
         menu.addItem(languageMenuItem())
 
@@ -276,6 +285,11 @@ public class StatusBarController: NSObject, NSMenuDelegate {
     @objc private func toggleAutostart() {
         let current = AutostartManager.shared.isAutostartEnabled
         _ = AutostartManager.shared.setAutostart(enabled: !current)
+        rebuildMenu()
+    }
+
+    @objc private func toggleQuickClose() {
+        AppSettings.shared.quickCloseEnabled.toggle()
         rebuildMenu()
     }
 

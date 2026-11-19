@@ -25,8 +25,17 @@ public class OverlayViewModel: ObservableObject {
     /// All windows, most recently used first, independent of the layout
     public private(set) var recentWindows: [WindowItem] = []
 
+    /// The selection was last moved by the mouse. The list then must not scroll to it: that moves
+    /// another card under the pointer, which gets selected, scrolls again …
+    @Published public private(set) var selectionFollowsPointer = false
+    /// The quick-close key is held: a click closes the window instead of switching to it
+    @Published public var isCloseKeyHeld = false
+
     public var onSelectWindow: ((WindowItem) -> Void)?
+    public var onCloseWindow: ((WindowItem) -> Void)?
     public var onCancel: (() -> Void)?
+
+    let edgeScroller = EdgeScroller()
 
     public init() {}
 
@@ -35,6 +44,7 @@ public class OverlayViewModel: ObservableObject {
     public func present(recentWindows recent: [WindowItem], initialIndex: Int, layout: SwitcherLayout) {
         recentWindows = recent
         self.layout = layout
+        selectionFollowsPointer = false
         rebuildDisplayOrder()
 
         guard !recent.isEmpty else {
@@ -153,16 +163,54 @@ public class OverlayViewModel: ObservableObject {
 
     public func noteKeyboardNavigation() {
         pointerAtKeyboardNavigation = NSEvent.mouseLocation
+        if selectionFollowsPointer {
+            selectionFollowsPointer = false
+        }
+    }
+
+    /// The pointer has not moved since the last keyboard navigation (or since the switcher opened)
+    var isPointerResting: Bool {
+        guard let resting = pointerAtKeyboardNavigation else { return false }
+        let pointer = NSEvent.mouseLocation
+        if abs(resting.x - pointer.x) < 2, abs(resting.y - pointer.y) < 2 {
+            return true
+        }
+        pointerAtKeyboardNavigation = nil
+        return false
     }
 
     public func hover(at index: Int) {
-        let pointer = NSEvent.mouseLocation
-        if let resting = pointerAtKeyboardNavigation,
-           abs(resting.x - pointer.x) < 2, abs(resting.y - pointer.y) < 2 {
-            return
+        guard !isPointerResting else { return }
+        if !selectionFollowsPointer {
+            selectionFollowsPointer = true
         }
-        pointerAtKeyboardNavigation = nil
         selectedIndex = index
+    }
+
+    /// A click on a card or row: switches to the window, or closes it while the quick-close key is held
+    public func click(at index: Int) {
+        guard windows.indices.contains(index) else { return }
+        if isCloseKeyHeld {
+            onCloseWindow?(windows[index])
+        } else {
+            selectWindow(at: index)
+        }
+    }
+
+    /// Takes a closed window out of the list; the selection stays on the same window, or moves to
+    /// the one that took the closed window's place
+    public func removeWindow(id: CGWindowID) {
+        guard recentWindows.contains(where: { $0.id == id }) else { return }
+        let selectedID = windows.indices.contains(selectedIndex) ? windows[selectedIndex].id : nil
+        let removedIndex = windows.firstIndex { $0.id == id }
+        recentWindows.removeAll { $0.id == id }
+        rebuildDisplayOrder()
+        if let selectedID = selectedID, selectedID != id,
+           let index = windows.firstIndex(where: { $0.id == selectedID }) {
+            selectedIndex = index
+        } else {
+            selectedIndex = min(removedIndex ?? selectedIndex, max(0, windows.count - 1))
+        }
     }
 
     public func selectCurrent() {
@@ -277,8 +325,11 @@ struct OverlayView: View {
                                         item: item,
                                         isSelected: viewModel.selectedIndex == index,
                                         isScreenRecordingGranted: viewModel.isScreenRecordingGranted,
+                                        showsCloseMark: viewModel.isCloseKeyHeld
+                                            && viewModel.selectionFollowsPointer
+                                            && viewModel.selectedIndex == index,
                                         onSelect: {
-                                            viewModel.selectWindow(at: index)
+                                            viewModel.click(at: index)
                                         },
                                         onHover: {
                                             viewModel.hover(at: index)
@@ -289,8 +340,10 @@ struct OverlayView: View {
                             }
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
+                            .background(EdgeScrollerAnchor(scroller: viewModel.edgeScroller, axis: .vertical))
                         }
                         .onChange(of: viewModel.selectedIndex) { newIndex in
+                            guard !viewModel.selectionFollowsPointer else { return }
                             withAnimation(.easeOut(duration: 0.15)) {
                                 proxy.scrollTo(newIndex, anchor: .center)
                             }
@@ -306,8 +359,11 @@ struct OverlayView: View {
                                         item: item,
                                         isSelected: viewModel.selectedIndex == index,
                                         isScreenRecordingGranted: viewModel.isScreenRecordingGranted,
+                                        showsCloseMark: viewModel.isCloseKeyHeld
+                                            && viewModel.selectionFollowsPointer
+                                            && viewModel.selectedIndex == index,
                                         onSelect: {
-                                            viewModel.selectWindow(at: index)
+                                            viewModel.click(at: index)
                                         },
                                         onHover: {
                                             viewModel.hover(at: index)
@@ -318,8 +374,10 @@ struct OverlayView: View {
                             }
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
+                            .background(EdgeScrollerAnchor(scroller: viewModel.edgeScroller, axis: .horizontal))
                         }
                         .onChange(of: viewModel.selectedIndex) { newIndex in
+                            guard !viewModel.selectionFollowsPointer else { return }
                             withAnimation(.easeOut(duration: 0.15)) {
                                 proxy.scrollTo(newIndex, anchor: .center)
                             }
@@ -329,11 +387,13 @@ struct OverlayView: View {
 
                 // Footer: Keyboard Navigation Hints. Long translations drop the release hint first,
                 // then the navigation hints, instead of being cut off.
+                let quickClose = settings.quickCloseEnabled
                 ViewThatFits(in: .horizontal) {
-                    footer(showNavigate: true, showToggle: true, showRelease: true)
-                    footer(showNavigate: true, showToggle: true, showRelease: false)
-                    footer(showNavigate: false, showToggle: true, showRelease: false)
-                    footer(showNavigate: false, showToggle: false, showRelease: false)
+                    footer(showNavigate: true, showToggle: true, showClose: quickClose, showRelease: true)
+                    footer(showNavigate: true, showToggle: true, showClose: quickClose, showRelease: false)
+                    footer(showNavigate: false, showToggle: true, showClose: quickClose, showRelease: false)
+                    footer(showNavigate: false, showToggle: true, showClose: false, showRelease: false)
+                    footer(showNavigate: false, showToggle: false, showClose: false, showRelease: false)
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 12)
@@ -353,7 +413,7 @@ struct OverlayView: View {
 }
 
 extension OverlayView {
-    private func footer(showNavigate: Bool, showToggle: Bool, showRelease: Bool) -> some View {
+    private func footer(showNavigate: Bool, showToggle: Bool, showClose: Bool, showRelease: Bool) -> some View {
         HStack(spacing: 16) {
             HintView(key: "⇥", text: L("overlay.hint.next"))
             HintView(key: "⇧⇥ / ⇧", text: L("overlay.hint.back"))
@@ -365,6 +425,9 @@ extension OverlayView {
                     key: "G",
                     text: viewModel.layout == .grouped ? L("overlay.hint.showCards") : L("overlay.hint.showList")
                 )
+            }
+            if showClose {
+                HintView(key: L("overlay.hint.closeKey"), text: L("overlay.hint.close"))
             }
             HintView(key: "Esc", text: L("overlay.hint.cancel"))
             Spacer(minLength: 0)

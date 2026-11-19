@@ -49,6 +49,7 @@ public class AppSettings: ObservableObject {
     private let lastCardLayoutKey = "AltSwitch_LastCardLayout"
     private let hasCompletedSetupKey = "AltSwitch_HasCompletedSetup"
     private let languageKey = "AltSwitch_Language"
+    private let quickCloseKey = "AltSwitch_QuickClose"
 
     @Published public var shortcutMode: ShortcutMode {
         didSet {
@@ -80,6 +81,13 @@ public class AppSettings: ObservableObject {
     @Published public var hasCompletedSetup: Bool {
         didSet {
             defaults.set(hasCompletedSetup, forKey: hasCompletedSetupKey)
+        }
+    }
+
+    /// Holding Q and clicking a window in the switcher closes it (like its close button)
+    @Published public var quickCloseEnabled: Bool {
+        didSet {
+            defaults.set(quickCloseEnabled, forKey: quickCloseKey)
         }
     }
 
@@ -115,6 +123,7 @@ public class AppSettings: ObservableObject {
         }
 
         self.hasCompletedSetup = defaults.bool(forKey: hasCompletedSetupKey)
+        self.quickCloseEnabled = defaults.object(forKey: quickCloseKey) as? Bool ?? true
 
         if let savedLanguage = defaults.string(forKey: languageKey),
            Localization.supportedLanguages.contains(where: { $0.code == savedLanguage }) {

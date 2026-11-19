@@ -50,15 +50,19 @@ struct GroupedWindowListView: View {
                         GroupedWindowSectionView(
                             group: group,
                             selectedIndex: viewModel.selectedIndex,
-                            onSelect: { viewModel.selectWindow(at: $0) },
+                            closeMarkIndex: viewModel.isCloseKeyHeld && viewModel.selectionFollowsPointer
+                                ? viewModel.selectedIndex : nil,
+                            onSelect: { viewModel.click(at: $0) },
                             onHover: { viewModel.hover(at: $0) }
                         )
                     }
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
+                .background(EdgeScrollerAnchor(scroller: viewModel.edgeScroller, axis: .vertical))
             }
             .onChange(of: viewModel.selectedIndex) { newIndex in
+                guard !viewModel.selectionFollowsPointer else { return }
                 withAnimation(.easeOut(duration: 0.12)) {
                     // nil anchor: scroll only as far as needed, so the list does not jump on every step
                     proxy.scrollTo(newIndex, anchor: nil)
@@ -71,6 +75,7 @@ struct GroupedWindowListView: View {
 struct GroupedWindowSectionView: View {
     let group: WindowGroup
     let selectedIndex: Int
+    var closeMarkIndex: Int?
     let onSelect: (Int) -> Void
     let onHover: (Int) -> Void
 
@@ -116,6 +121,7 @@ struct GroupedWindowSectionView: View {
                 GroupedWindowRowView(
                     item: item,
                     isSelected: index == selectedIndex,
+                    showsCloseMark: index == closeMarkIndex,
                     onSelect: { onSelect(index) },
                     onHover: { onHover(index) }
                 )
@@ -141,6 +147,7 @@ struct GroupedWindowSectionView: View {
 struct GroupedWindowRowView: View {
     let item: WindowItem
     let isSelected: Bool
+    var showsCloseMark = false
     let onSelect: () -> Void
     let onHover: () -> Void
     // Re-render when the UI language changes
@@ -160,10 +167,16 @@ struct GroupedWindowRowView: View {
     var body: some View {
         Button(action: onSelect) {
             HStack(spacing: GroupedListMetrics.glyphSpacing) {
-                Image(systemName: item.isMinimized ? "dock.rectangle" : "macwindow")
-                    .font(.system(size: 12))
-                    .foregroundColor(isSelected ? .white.opacity(0.9) : .secondary)
-                    .frame(width: GroupedListMetrics.glyphWidth)
+                Group {
+                    if showsCloseMark {
+                        CloseMark(size: 14)
+                    } else {
+                        Image(systemName: item.isMinimized ? "dock.rectangle" : "macwindow")
+                            .font(.system(size: 12))
+                            .foregroundColor(isSelected ? .white.opacity(0.9) : .secondary)
+                    }
+                }
+                .frame(width: GroupedListMetrics.glyphWidth)
 
                 // Middle truncation keeps both ends readable: the start (file, host) and the end
                 // (project, app) of titles like "file.swift — project"

@@ -156,3 +156,6 @@
 
 /* Default button */
 "setup.finish" = "Finish & Get Started";
+"menu.quickClose" = "Q + Click Closes Windows";
+"overlay.hint.closeKey" = "Q + click";
+"overlay.hint.close" = "Close";

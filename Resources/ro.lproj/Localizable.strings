@@ -53,3 +53,6 @@
 "setup.autostart.detail" = "AltSwitch rulează discret în bara de meniuri.";
 "setup.later" = "Configurează mai târziu";
 "setup.finish" = "Finalizează și începe";
+"menu.quickClose" = "Q + clic închide ferestrele";
+"overlay.hint.closeKey" = "Q + clic";
+"overlay.hint.close" = "Închide";

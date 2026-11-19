@@ -53,3 +53,6 @@
 "setup.autostart.detail" = "AltSwitch toimii huomaamattomasti valikkorivillä.";
 "setup.later" = "Määritä myöhemmin";
 "setup.finish" = "Viimeistele ja aloita";
+"menu.quickClose" = "Q + napsautus sulkee ikkunan";
+"overlay.hint.closeKey" = "Q + napsautus";
+"overlay.hint.close" = "Sulje";

@@ -53,3 +53,6 @@
 "setup.autostart.detail" = "AltSwitch непомітно працює на смузі меню.";
 "setup.later" = "Налаштувати пізніше";
 "setup.finish" = "Готово, почати";
+"menu.quickClose" = "Q + клацання закриває вікна";
+"overlay.hint.closeKey" = "Q + клацання";
+"overlay.hint.close" = "Закрити";

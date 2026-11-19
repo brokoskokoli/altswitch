@@ -53,3 +53,6 @@
 "setup.autostart.detail" = "AltSwitch beží nenápadne na lište s ponukami.";
 "setup.later" = "Nastaviť neskôr";
 "setup.finish" = "Dokončiť a začať";
+"menu.quickClose" = "Q + kliknutie zatvorí okno";
+"overlay.hint.closeKey" = "Q + klik";
+"overlay.hint.close" = "Zavrieť";

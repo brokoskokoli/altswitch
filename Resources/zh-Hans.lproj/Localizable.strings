@@ -53,3 +53,6 @@
 "setup.autostart.detail" = "AltSwitch 在菜单栏中安静地运行。";
 "setup.later" = "稍后设置";
 "setup.finish" = "完成并开始";
+"menu.quickClose" = "按住 Q 点按以关闭窗口";
+"overlay.hint.closeKey" = "Q + 点按";
+"overlay.hint.close" = "关闭";
