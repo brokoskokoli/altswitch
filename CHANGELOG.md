@@ -6,6 +6,19 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-11-19
+
+### Fixed
+- **System app switcher instead of AltSwitch:** now and then ⌘-Tab brought up macOS's own app
+  switcher, and only the second try opened AltSwitch. The shortcut was handled on the same thread
+  as everything else; when that thread waited on an app that was slow to answer, macOS switched
+  the shortcut handling off and passed ⌘-Tab on to the system. The shortcut now has a thread of its
+  own and always reaches AltSwitch.
+
+### Changed
+- **Smoother:** AltSwitch waits at most 0.3 s for an app that does not answer (before: up to 6 s
+  per window), so a busy app no longer freezes the switcher or the switch to the chosen window.
+
 ## [1.2.0] - 2026-10-25
 
 ### Added
@@ -94,7 +107,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 First version (unsigned, withdrawn).
 
-[Unreleased]: https://github.com/brokoskokoli/altswitch/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/brokoskokoli/altswitch/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/brokoskokoli/altswitch/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/brokoskokoli/altswitch/compare/v1.1.3...v1.2.0
 [1.1.3]: https://github.com/brokoskokoli/altswitch/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/brokoskokoli/altswitch/compare/v1.1.1...v1.1.2
