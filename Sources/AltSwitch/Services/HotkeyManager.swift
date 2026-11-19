@@ -23,17 +23,11 @@ public class HotkeyManager {
 
     /// The tap's state. The tap runs on its own thread, so all of it is guarded by `lock`.
     private let lock = NSLock()
-    private var overlayActive = false
-    /// Counts the openings of the switcher. The main thread may run behind the tap: when it
-    /// closes the switcher of an earlier opening, the current one must stay open.
-    private var session: UInt64 = 0
-    private var activeTriggerModifier: CGEventFlags?
-    private var wasShiftDown: Bool = false
-    private var shiftWasUsedWithKey: Bool = false
-    private var wasTriggerModifierDown = false
-    /// Copy of AppSettings.shortcutMode: the settings object belongs to the main thread
-    private var shortcutMode: ShortcutMode = .optionTab
+    /// Keyboard logic; its `mode` mirrors AppSettings.shortcutMode, which belongs to the main thread
+    private var machine = ShortcutStateMachine()
     private var eventTap: CFMachPort?
+    /// How often macOS switched the tap off (for the diagnostics)
+    private var tapReenableCount = 0
 
     /// The shortcut's modifier went down while the overlay is closed: a press may follow.
     /// Called on the main thread.
@@ -41,7 +35,7 @@ public class HotkeyManager {
 
     // Main thread only
     private var runLoopSource: CFRunLoopSource?
-    private var retryTimer: Timer?
+    private var permissionTimer: Timer?
     private var settingsObserver: AnyCancellable?
 
     /// The event tap gets its own thread. On the main run loop, any stall there (an app slow to
@@ -55,68 +49,71 @@ public class HotkeyManager {
 
     private init() {}
 
+    /// Whether the event tap is installed (for the diagnostics)
+    public var isTapInstalled: Bool { lock.locked { eventTap != nil } }
+    public var tapReenables: Int { lock.locked { tapReenableCount } }
+
     public func start() {
         stop()
-        lock.locked { shortcutMode = AppSettings.shared.shortcutMode }
+        lock.locked { machine.mode = AppSettings.shared.shortcutMode }
         settingsObserver = AppSettings.shared.$shortcutMode.sink { [weak self] mode in
             guard let self = self else { return }
-            self.lock.locked { self.shortcutMode = mode }
+            self.lock.locked {
+                self.machine.mode = mode
+                self.machine.reset()
+            }
         }
         setupEventTap()
 
-        if lock.locked({ eventTap == nil }) {
-            // Periodically attempt to acquire the tap once permission is granted
-            retryTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
-                guard let self = self else { return }
-                if self.lock.locked({ self.eventTap == nil }) && PermissionsManager.shared.isAccessibilityGranted {
-                    self.setupEventTap()
-                    if self.lock.locked({ self.eventTap != nil }) {
-                        self.retryTimer?.invalidate()
-                        self.retryTimer = nil
-                    }
-                }
+        // Follow the Accessibility permission while running: install the tap once it is granted,
+        // and remove it when it is taken away. An active tap without the permission can leave the
+        // whole system without keyboard input.
+        permissionTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            let granted = PermissionsManager.shared.isAccessibilityGranted
+            let installed = self.isTapInstalled
+            if granted && !installed {
+                self.setupEventTap()
+            } else if !granted && installed {
+                NSLog("AltSwitch: Accessibility permission revoked, removing the event tap")
+                self.removeEventTap()
             }
         }
     }
 
     public func stop() {
-        retryTimer?.invalidate()
-        retryTimer = nil
+        permissionTimer?.invalidate()
+        permissionTimer = nil
         settingsObserver = nil
+        removeEventTap()
+    }
 
+    private func removeEventTap() {
         if let source = runLoopSource {
             CFRunLoopRemoveSource(tapThread.runLoop, source, .commonModes)
             runLoopSource = nil
         }
         let tap = lock.locked { () -> CFMachPort? in
-            defer { eventTap = nil }
+            defer {
+                eventTap = nil
+                machine.reset()
+            }
             return eventTap
         }
         if let tap = tap {
             CGEvent.tapEnable(tap: tap, enable: false)
             CFMachPortInvalidate(tap)
         }
+        // A switcher left open would no longer get the release of the modifier
+        DispatchQueue.main.async { [weak self] in
+            self?.delegate?.hotkeyCancelled()
+        }
     }
 
     /// The main thread closed the switcher of `session`. Ignored if the tap has opened a newer one
     /// since, or closed this one itself.
     public func endSession(_ session: UInt64) {
-        lock.locked {
-            if self.session == session {
-                setOverlayActive(false)
-            }
-        }
-    }
-
-    /// Lock must be held.
-    private func setOverlayActive(_ active: Bool) {
-        overlayActive = active
-        if !active {
-            activeTriggerModifier = nil
-            wasTriggerModifierDown = false
-            wasShiftDown = false
-            shiftWasUsedWithKey = false
-        }
+        lock.locked { machine.end(session: session) }
     }
 
     private func setupEventTap() {
@@ -159,165 +156,49 @@ public class HotkeyManager {
 
     /// Runs on the tap thread. Keep it short: macOS waits for it before passing any key on.
     private func handleEvent(proxy: CGEventTapProxy, type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {
+        let result: ShortcutStateMachine.Result
         lock.lock()
-        defer { lock.unlock() }
-
-        if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+        switch type {
+        case .tapDisabledByTimeout, .tapDisabledByUserInput:
             if let tap = eventTap {
                 CGEvent.tapEnable(tap: tap, enable: true)
+                tapReenableCount += 1
                 NSLog("AltSwitch: EventTap re-enabled after %@", type == .tapDisabledByTimeout ? "timeout" : "user input")
             }
+            lock.unlock()
             return nil
+        case .keyDown:
+            result = machine.keyDown(keyCode: event.getIntegerValueField(.keyboardEventKeycode), flags: event.flags)
+        case .flagsChanged:
+            result = machine.flagsChanged(flags: event.flags)
+        default:
+            lock.unlock()
+            return Unmanaged.passUnretained(event)
         }
+        lock.unlock()
 
-        let flags = event.flags
-        let currentMode = shortcutMode
-
-        let isOptionDown = flags.contains(.maskAlternate)
-        let isCmdDown = flags.contains(.maskCommand)
-        let isShiftDown = flags.contains(.maskShift)
-
-        // MARK: - KeyDown
-        if type == .keyDown {
-            let keyCode = event.getIntegerValueField(.keyboardEventKeycode)
-
-            let isTriggerModifierDown: Bool
-            let triggerFlag: CGEventFlags
-            switch currentMode {
-            case .optionTab:
-                // Option must be down, and Command must not be down
-                isTriggerModifierDown = isOptionDown && !isCmdDown
-                triggerFlag = .maskAlternate
-            case .cmdTab:
-                // Command must be down, and Option must not be down
-                isTriggerModifierDown = isCmdDown && !isOptionDown
-                triggerFlag = .maskCommand
-            }
-
-            // Tab key (KeyCode 48)
-            if keyCode == 48 && isTriggerModifierDown {
-                let forward = !isShiftDown
-                wasShiftDown = isShiftDown
-                if isShiftDown {
-                    shiftWasUsedWithKey = true
-                }
-
-                if !overlayActive {
-                    setOverlayActive(true)
-                    activeTriggerModifier = triggerFlag
-                    session &+= 1
-                    let session = self.session
-                    DispatchQueue.main.async { [weak self] in
-                        guard let self = self else { return }
-                        self.delegate?.hotkeyTriggered(forward: forward, session: session)
-                    }
-                } else {
-                    DispatchQueue.main.async { [weak self] in
-                        guard let self = self else { return }
-                        self.delegate?.hotkeyCycle(forward: forward)
-                    }
-                }
-                return nil // Consume event
-            }
-
-            // While overlay is active, intercept navigation keys
-            if overlayActive {
-                switch keyCode {
-                case 124: // Right Arrow
-                    DispatchQueue.main.async { [weak self] in
-                        self?.delegate?.hotkeyNavigate(direction: .right)
-                    }
-                    return nil
-
-                case 123: // Left Arrow
-                    DispatchQueue.main.async { [weak self] in
-                        self?.delegate?.hotkeyNavigate(direction: .left)
-                    }
-                    return nil
-
-                case 126: // Up Arrow
-                    DispatchQueue.main.async { [weak self] in
-                        self?.delegate?.hotkeyNavigate(direction: .up)
-                    }
-                    return nil
-
-                case 125: // Down Arrow
-                    DispatchQueue.main.async { [weak self] in
-                        self?.delegate?.hotkeyNavigate(direction: .down)
-                    }
-                    return nil
-
-                case 5: // G (by position, so it works with any modifier held): toggle the view
-                    DispatchQueue.main.async { [weak self] in
-                        self?.delegate?.hotkeyToggleLayout()
-                    }
-                    return nil
-
-                case 53: // Escape
-                    setOverlayActive(false)
-                    DispatchQueue.main.async { [weak self] in
-                        self?.delegate?.hotkeyCancelled()
-                    }
-                    return nil
-
-                case 36, 49: // Return or Space
-                    setOverlayActive(false)
-                    DispatchQueue.main.async { [weak self] in
-                        self?.delegate?.hotkeyConfirmed()
-                    }
-                    return nil
-
-                default:
-                    break
-                }
+        if !result.actions.isEmpty {
+            let actions = result.actions
+            DispatchQueue.main.async { [weak self] in
+                self?.perform(actions)
             }
         }
+        return result.consume ? nil : Unmanaged.passUnretained(event)
+    }
 
-        // MARK: - FlagsChanged
-        if type == .flagsChanged {
-            if overlayActive, let trigger = activeTriggerModifier {
-                let isTriggerStillDown = flags.contains(trigger)
-
-                if !isTriggerStillDown {
-                    // Trigger modifier was released! Confirm selection and dismiss
-                    setOverlayActive(false)
-                    DispatchQueue.main.async { [weak self] in
-                        self?.delegate?.hotkeyConfirmed()
-                    }
-                    return Unmanaged.passUnretained(event)
-                }
-
-                // Trigger modifier is still held down!
-                let isShiftNowDown = flags.contains(.maskShift)
-                if isShiftNowDown && !wasShiftDown {
-                    // Shift was just pressed
-                    shiftWasUsedWithKey = false
-                } else if !isShiftNowDown && wasShiftDown {
-                    // Shift was just released!
-                    // If Shift was tapped alone (not used with Tab), step backward
-                    if !shiftWasUsedWithKey {
-                        DispatchQueue.main.async { [weak self] in
-                            self?.delegate?.hotkeyCycle(forward: false)
-                        }
-                    }
-                }
-                wasShiftDown = isShiftNowDown
-            } else {
-                wasShiftDown = flags.contains(.maskShift)
-                shiftWasUsedWithKey = false
-
-                let triggerFlag: CGEventFlags = currentMode == .cmdTab ? .maskCommand : .maskAlternate
-                let isTriggerDown = flags.contains(triggerFlag)
-                if isTriggerDown && !wasTriggerModifierDown {
-                    DispatchQueue.main.async { [weak self] in
-                        self?.onTriggerModifierDown?()
-                    }
-                }
-                wasTriggerModifierDown = isTriggerDown
+    /// Main thread
+    private func perform(_ actions: [ShortcutAction]) {
+        for action in actions {
+            switch action {
+            case .open(let forward, let session): delegate?.hotkeyTriggered(forward: forward, session: session)
+            case .cycle(let forward): delegate?.hotkeyCycle(forward: forward)
+            case .navigate(let direction): delegate?.hotkeyNavigate(direction: direction)
+            case .toggleLayout: delegate?.hotkeyToggleLayout()
+            case .confirm: delegate?.hotkeyConfirmed()
+            case .cancel: delegate?.hotkeyCancelled()
+            case .triggerModifierDown: onTriggerModifierDown?()
             }
         }
-
-        return Unmanaged.passUnretained(event)
     }
 }
 

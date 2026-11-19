@@ -10,7 +10,7 @@
 ## Checklist
 
 - [ ] The change is described in an issue (for features: discussed first)
-- [ ] `./build.sh` succeeds and the change was tried in the running app
+- [ ] `swift test` and `./build.sh` succeed, and the change was tried in the running app
 - [ ] New files carry an SPDX header
 - [ ] User-visible changes are noted in `CHANGELOG.md` under *Unreleased*
 - [ ] Docs updated where needed (README, docs/, website/)

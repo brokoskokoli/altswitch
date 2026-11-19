@@ -14,6 +14,12 @@ let package = Package(
         .executableTarget(
             name: "AltSwitch",
             path: "Sources/AltSwitch"
+        ),
+        // Run with `swift test`. The app itself is built by build.sh.
+        .testTarget(
+            name: "AltSwitchTests",
+            dependencies: ["AltSwitch"],
+            path: "Tests/AltSwitchTests"
         )
     ]
 )

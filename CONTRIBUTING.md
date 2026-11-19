@@ -17,7 +17,12 @@ Requires macOS 13 or later and the Xcode Command Line Tools (`xcode-select --ins
 ARCHS=arm64 ./build.sh          # fast local build → .build/AltSwitch.app (ad-hoc signed)
 open .build/AltSwitch.app
 ./build.sh                      # universal build, as in the release
+swift test                      # tests (keyboard logic of the switcher), as in CI
 ```
+
+With only the Command Line Tools (no Xcode), `swift test` sometimes fails with *plugin for module
+'TestingMacros' not found*. Pass the plugin folder explicitly:
+`swift test -Xswiftc -plugin-path -Xswiftc /Library/Developer/CommandLineTools/usr/lib/swift/host/plugins/testing`.
 
 macOS ties the Accessibility and Screen Recording permissions to the code signature: an ad-hoc
 build is a different app for macOS, so grant the permissions again (or remove the old entry in
@@ -30,7 +35,8 @@ one instance runs at a time.
 |---|---|
 | `Sources/AltSwitch/App/` | App entry point and delegate |
 | `Sources/AltSwitch/Models/` | Window model and settings |
-| `Sources/AltSwitch/Services/` | Hotkey event tap, window list and previews, permissions, autostart |
+| `Sources/AltSwitch/Services/` | Hotkey event tap and its keyboard logic, window list and previews, permissions, autostart, diagnostics |
+| `Tests/AltSwitchTests/` | Tests (Swift Testing) |
 | `Sources/AltSwitch/UI/` | Overlay panel, cards, menu bar, setup assistant (SwiftUI + AppKit) |
 | `Resources/` | `Info.plist`, app icon |
 | `tools/` | Release packaging and secrets setup |
@@ -66,7 +72,7 @@ when you include third-party code, and add its licence to `LICENSES/` and `REUSE
 ## Pull request checklist
 
 - [ ] The change is described in an issue (for features: discussed first)
-- [ ] `./build.sh` succeeds and the change was tried in the running app
+- [ ] `swift test` and `./build.sh` succeed, and the change was tried in the running app
 - [ ] New files carry an SPDX header
 - [ ] User-visible changes are noted in [CHANGELOG.md](CHANGELOG.md) under *Unreleased*
 - [ ] Docs updated where needed (README, docs/, website/)
