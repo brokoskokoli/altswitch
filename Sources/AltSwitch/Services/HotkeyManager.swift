@@ -37,6 +37,8 @@ public class HotkeyManager {
     private var runLoopSource: CFRunLoopSource?
     private var permissionTimer: Timer?
     private var settingsObserver: AnyCancellable?
+    /// tapCreate failed before: not logged again every 2 s
+    private var tapCreateFailed = false
 
     /// The event tap gets its own thread. On the main run loop, any stall there (an app slow to
     /// answer an Accessibility call, SwiftUI layout) holds the shortcut back; past about a second
@@ -58,26 +60,42 @@ public class HotkeyManager {
         lock.locked { machine.mode = AppSettings.shared.shortcutMode }
         settingsObserver = AppSettings.shared.$shortcutMode.sink { [weak self] mode in
             guard let self = self else { return }
-            self.lock.locked {
-                self.machine.mode = mode
-                self.machine.reset()
-            }
+            // An open switcher is closed by start(), which every change of the mode calls
+            self.lock.locked { self.machine.mode = mode }
         }
         setupEventTap()
 
         // Follow the Accessibility permission while running: install the tap once it is granted,
         // and remove it when it is taken away. An active tap without the permission can leave the
         // whole system without keyboard input.
-        permissionTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
-            guard let self = self else { return }
-            let granted = PermissionsManager.shared.isAccessibilityGranted
-            let installed = self.isTapInstalled
-            if granted && !installed {
-                self.setupEventTap()
-            } else if !granted && installed {
+        let timer = Timer(timeInterval: 2.0, repeats: true) { [weak self] _ in
+            self?.checkEventTap()
+        }
+        // No need to be punctual: lets macOS bundle the wake-ups
+        timer.tolerance = 1.0
+        RunLoop.main.add(timer, forMode: .common)
+        permissionTimer = timer
+    }
+
+    /// Main thread, every 2 s.
+    private func checkEventTap() {
+        let granted = PermissionsManager.shared.isAccessibilityGranted
+        let tap = lock.locked { eventTap }
+        if !granted {
+            if tap != nil {
                 NSLog("AltSwitch: Accessibility permission revoked, removing the event tap")
-                self.removeEventTap()
+                removeEventTap()
             }
+        } else if let tap = tap {
+            // Still installed but switched off (permission taken away and given back in between,
+            // or macOS gave up on it): a new one
+            if !CGEvent.tapIsEnabled(tap: tap) {
+                NSLog("AltSwitch: EventTap found disabled, creating a new one")
+                removeEventTap()
+                setupEventTap()
+            }
+        } else {
+            setupEventTap()
         }
     }
 
@@ -141,9 +159,13 @@ public class HotkeyManager {
             },
             userInfo: selfPointer
         ) else {
-            NSLog("AltSwitch: Failed to create CGEventTap. Accessibility permission may be required.")
+            if !tapCreateFailed {
+                NSLog("AltSwitch: Failed to create CGEventTap. Accessibility permission may be required.")
+            }
+            tapCreateFailed = true
             return
         }
+        tapCreateFailed = false
 
         lock.locked { self.eventTap = tap }
         let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
@@ -156,21 +178,44 @@ public class HotkeyManager {
 
     /// Runs on the tap thread. Keep it short: macOS waits for it before passing any key on.
     private func handleEvent(proxy: CGEventTapProxy, type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {
+        let tapDisabled = type == .tapDisabledByTimeout || type == .tapDisabledByUserInput
+        // Asked outside the lock: it is a call to another process
+        let trusted = tapDisabled ? AXIsProcessTrusted() : true
         let result: ShortcutStateMachine.Result
         lock.lock()
         switch type {
         case .tapDisabledByTimeout, .tapDisabledByUserInput:
-            if let tap = eventTap {
-                CGEvent.tapEnable(tap: tap, enable: true)
-                tapReenableCount += 1
-                NSLog("AltSwitch: EventTap re-enabled after %@", type == .tapDisabledByTimeout ? "timeout" : "user input")
+            guard let tap = eventTap else {
+                lock.unlock()
+                return nil
             }
+            // Without the permission an enabled tap can leave the whole system without keyboard
+            // input: leave it off and remove it
+            guard trusted else {
+                lock.unlock()
+                NSLog("AltSwitch: EventTap disabled and Accessibility permission missing, removing it")
+                DispatchQueue.main.async { [weak self] in
+                    self?.removeEventTap()
+                }
+                return nil
+            }
+            CGEvent.tapEnable(tap: tap, enable: true)
+            tapReenableCount += 1
+            // Keys pressed or released while the tap was off were not seen
+            result = machine.sync(flags: CGEventSource.flagsState(.combinedSessionState))
             lock.unlock()
+            NSLog("AltSwitch: EventTap re-enabled after %@", type == .tapDisabledByTimeout ? "timeout" : "user input")
+            if !result.actions.isEmpty {
+                let actions = result.actions
+                DispatchQueue.main.async { [weak self] in
+                    self?.perform(actions)
+                }
+            }
             return nil
         case .keyDown:
             result = machine.keyDown(keyCode: event.getIntegerValueField(.keyboardEventKeycode), flags: event.flags)
         case .flagsChanged:
-            result = machine.flagsChanged(flags: event.flags)
+            result = machine.flagsChanged(keyCode: event.getIntegerValueField(.keyboardEventKeycode), flags: event.flags)
         default:
             lock.unlock()
             return Unmanaged.passUnretained(event)

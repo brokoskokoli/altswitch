@@ -34,6 +34,10 @@ struct ShortcutStateMachine {
         static let escape: Int64 = 53
         static let returnKey: Int64 = 36
         static let space: Int64 = 49
+        static let rightCommand: Int64 = 54
+        static let leftCommand: Int64 = 55
+        static let leftOption: Int64 = 58
+        static let rightOption: Int64 = 61
     }
 
     var mode: ShortcutMode = .optionTab
@@ -48,6 +52,33 @@ struct ShortcutStateMachine {
 
     private var triggerFlag: CGEventFlags {
         mode == .cmdTab ? .maskCommand : .maskAlternate
+    }
+
+    /// Device-dependent bits in the event flags (NX_DEVICELCMDKEYMASK …): set while that very
+    /// key is down, so a press of one ⌘ key can be told from the release of the other.
+    static let deviceKeyBits: [Int64: UInt64] = [
+        KeyCode.leftCommand: 0x08,
+        KeyCode.rightCommand: 0x10,
+        KeyCode.leftOption: 0x20,
+        KeyCode.rightOption: 0x40,
+    ]
+
+    /// Whether `keyCode` is a trigger key that just went down.
+    private func isTriggerKeyPress(keyCode: Int64, flags: CGEventFlags) -> Bool {
+        let keys = mode == .cmdTab ? [KeyCode.leftCommand, KeyCode.rightCommand] : [KeyCode.leftOption, KeyCode.rightOption]
+        guard keys.contains(keyCode), let bit = Self.deviceKeyBits[keyCode] else { return false }
+        return flags.rawValue & bit != 0
+    }
+
+    /// The modifier keys as they are now, read after the tap was switched off for a while: if the
+    /// trigger is up, its release was missed and the open switcher is closed.
+    mutating func sync(flags: CGEventFlags) -> Result {
+        var result = Result()
+        if isActive, let trigger = activeTriggerModifier, !flags.contains(trigger) {
+            reset()
+            result.actions.append(.cancel)
+        }
+        return result
     }
 
     /// Ends the active opening without an action (closed by the main thread or after an error).
@@ -130,8 +161,17 @@ struct ShortcutStateMachine {
         return result
     }
 
-    mutating func flagsChanged(flags: CGEventFlags) -> Result {
+    /// `keyCode`: the modifier key that went down or up.
+    mutating func flagsChanged(keyCode: Int64, flags: CGEventFlags) -> Result {
         var result = Result()
+
+        // The trigger key goes down while the switcher thinks it is held: its release was missed.
+        // Close the switcher and treat this as a fresh press. Otherwise the next ⌘ shortcut would
+        // be swallowed and releasing ⌘ would switch windows.
+        if isActive, isTriggerKeyPress(keyCode: keyCode, flags: flags) {
+            reset()
+            result.actions.append(.cancel)
+        }
 
         if isActive, let trigger = activeTriggerModifier {
             if !flags.contains(trigger) {
