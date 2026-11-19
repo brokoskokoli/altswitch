@@ -84,6 +84,12 @@ public class StatusBarController: NSObject, NSMenuDelegate {
             menu.addItem(scrItem)
         }
 
+        if Diagnostics.isSecureInputEnabled {
+            let secureItem = NSMenuItem(title: L("menu.secureInput"), action: nil, keyEquivalent: "")
+            secureItem.isEnabled = false
+            menu.addItem(secureItem)
+        }
+
         menu.addItem(NSMenuItem.separator())
 
         // 3. Shortcut Selection
@@ -164,6 +170,14 @@ public class StatusBarController: NSObject, NSMenuDelegate {
 
         menu.addItem(NSMenuItem.separator())
 
+        let diagnosticsItem = NSMenuItem(
+            title: L("menu.copyDiagnostics"),
+            action: #selector(handleCopyDiagnostics),
+            keyEquivalent: ""
+        )
+        diagnosticsItem.target = self
+        menu.addItem(diagnosticsItem)
+
         // 7. Quit
         let quitItem = NSMenuItem(
             title: L("menu.quit"),
@@ -212,6 +226,10 @@ public class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     // MARK: - Actions
+
+    @objc private func handleCopyDiagnostics() {
+        Diagnostics.copyToPasteboard()
+    }
 
     @objc private func handleOpenSetup() {
         SetupWindowController.shared.show()

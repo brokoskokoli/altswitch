@@ -13,6 +13,8 @@
 "menu.language" = "Språk";
 "menu.systemLanguage" = "Systemspråk";
 "menu.quit" = "Avsluta AltSwitch";
+"menu.secureInput" = "⚠️ Säker tangentbordsinmatning är på – kortkommandot blockeras";
+"menu.copyDiagnostics" = "Kopiera diagnostik";
 "shortcut.optionTab" = "Option + Tab (⌥-Tab)";
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "Kompakt (fokus)";
@@ -32,6 +34,7 @@
 "overlay.hint.showCards" = "Förhandsvisningar";
 "card.screenRecordingRequired" = "Skärminspelning krävs";
 "card.loading" = "Läser in…";
+"card.previewUnavailable" = "Förhandsvisning är inte tillgänglig";
 "setup.windowTitle" = "Välkommen till AltSwitch — Första inställning";
 "setup.welcome" = "Välkommen till AltSwitch";
 "setup.subtitle" = "Första inställning och behörigheter för fönsterväxlaren i Windows-stil.";

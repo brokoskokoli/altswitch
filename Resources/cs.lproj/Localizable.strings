@@ -13,6 +13,8 @@
 "menu.language" = "Jazyk";
 "menu.systemLanguage" = "Jazyk systému";
 "menu.quit" = "Ukončit AltSwitch";
+"menu.secureInput" = "⚠️ Zabezpečené zadávání z klávesnice je zapnuté – zkratka je blokována";
+"menu.copyDiagnostics" = "Kopírovat diagnostiku";
 "shortcut.optionTab" = "Option + Tab (⌥-Tab)";
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "Kompaktní (fokus)";
@@ -32,6 +34,7 @@
 "overlay.hint.showCards" = "Náhledy";
 "card.screenRecordingRequired" = "Vyžaduje nahrávání obrazovky";
 "card.loading" = "Načítání…";
+"card.previewUnavailable" = "Náhled není k dispozici";
 "setup.windowTitle" = "Vítejte v AltSwitch — Úvodní nastavení";
 "setup.welcome" = "Vítejte v AltSwitch";
 "setup.subtitle" = "Úvodní nastavení a oprávnění pro přepínač oken ve stylu Windows.";

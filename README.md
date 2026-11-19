@@ -92,6 +92,20 @@ Security*:
 | Switch by mouse | click a card |
 | Cancel | `Esc` |
 
+While the switcher is open, other keys do nothing: `⌘Q` out of habit does not quit the app you are
+leaving.
+
+## Troubleshooting
+
+**`⌘-Tab` shows the macOS app switcher instead of AltSwitch.** Another app has *secure keyboard
+entry* on – a focused password field, or *Terminal → Secure Keyboard Entry*. macOS then hands key
+presses to no other app, AltSwitch included. The AltSwitch menu says so while it is on; leave the
+password field or turn the option off.
+
+**Something else is wrong.** *Copy Diagnostics* in the AltSwitch menu copies version, permissions
+and state (no window titles or app names) for a
+[bug report](https://github.com/brokoskokoli/altswitch/issues/new/choose).
+
 ## Build from source
 
 Requires the Xcode Command Line Tools (`xcode-select --install`).
@@ -103,7 +117,7 @@ cd altswitch
 open .build/AltSwitch.app
 ```
 
-`ARCHS=arm64 ./build.sh` builds only for Apple silicon (faster). Local builds are signed ad hoc;
+`ARCHS=arm64 ./build.sh` builds only for Apple silicon (faster), `swift test` runs the tests. Local builds are signed ad hoc;
 macOS asks for the permissions again for such a build.
 
 ## Privacy

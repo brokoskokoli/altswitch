@@ -34,16 +34,11 @@ public class PermissionsManager {
     // MARK: - Screen Recording
 
     public var isScreenRecordingGranted: Bool {
-        if #available(macOS 10.15, *) {
-            return CGPreflightScreenCaptureAccess()
-        }
-        return true
+        CGPreflightScreenCaptureAccess()
     }
 
     public func requestScreenRecording() {
-        if #available(macOS 10.15, *) {
-            CGRequestScreenCaptureAccess()
-        }
+        CGRequestScreenCaptureAccess()
     }
 
     public func openScreenRecordingSettings() {

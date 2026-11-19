@@ -58,8 +58,6 @@
 	<string>AltSwitch needs Accessibility access to focus windows and to capture global keyboard shortcuts.</string>
 	<key>NSAppSleepDisabled</key>
 	<true/>
-	<key>NSAppleEventsUsageDescription</key>
-	<string>AltSwitch needs Accessibility access to focus windows and to capture global keyboard shortcuts.</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSPrincipalClass</key>

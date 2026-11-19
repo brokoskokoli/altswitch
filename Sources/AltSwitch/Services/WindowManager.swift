@@ -127,6 +127,11 @@ private struct AXWindowInfo {
 public class WindowManager {
     public static let shared = WindowManager()
 
+    /// False once a macOS version drops CGWindowListCreateImage: no previews at all then.
+    public static var isCaptureAvailable: Bool {
+        dynamicCGWindowListCreateImage != nil
+    }
+
     /// Last captured image per window, scaled down. macOS cannot capture minimized windows, so
     /// they show the image from before they were minimized. Accessed only on cacheQueue.
     private var thumbnailCache: [CGWindowID: CGImage] = [:]
@@ -408,14 +413,20 @@ public class WindowManager {
         }
 
         let attributes = [kAXRoleAttribute, kAXSubroleAttribute, kAXMinimizedAttribute, kAXTitleAttribute] as CFArray
-        return windows.map { window in
+        var infos: [AXWindowInfo] = []
+        for window in windows {
             var values: CFArray?
             var role: String?
             var subrole: String?
             var isMinimized = false
             var title = ""
-            if AXUIElementCopyMultipleAttributeValues(window, attributes, AXCopyMultipleAttributeOptions(rawValue: 0), &values) == .success,
-               let array = values as? [AnyObject], array.count == 4 {
+            let result = AXUIElementCopyMultipleAttributeValues(window, attributes, AXCopyMultipleAttributeOptions(rawValue: 0), &values)
+            // The app stopped answering: each further window would wait for the timeout again.
+            // Keep what was read; the rest of its windows are judged by the window list alone.
+            if result == .cannotComplete {
+                break
+            }
+            if result == .success, let array = values as? [AnyObject], array.count == 4 {
                 // Attributes that could not be read come back as AXError values and fail these casts
                 role = array[0] as? String
                 subrole = array[1] as? String
@@ -430,8 +441,9 @@ public class WindowManager {
 
             let isStandard = role == kAXWindowRole as String
                 && (subrole == kAXStandardWindowSubrole as String || subrole == kAXDialogSubrole as String)
-            return AXWindowInfo(element: window, id: wid, isMinimized: isMinimized, title: title, isStandard: isStandard)
+            infos.append(AXWindowInfo(element: window, id: wid, isMinimized: isMinimized, title: title, isStandard: isStandard))
         }
+        return infos
     }
 
     private func axFrame(of window: AXUIElement) -> CGRect? {
@@ -501,11 +513,16 @@ public class WindowManager {
                 return
             }
             let currentPID = NSRunningApplication.current.processIdentifier
+            // Only apps the switcher lists: windows of background agents and helpers would be
+            // captured and kept for nothing
+            let regularPIDs = Set(NSWorkspace.shared.runningApplications
+                .filter { $0.activationPolicy == .regular && $0.processIdentifier != currentPID }
+                .map(\.processIdentifier))
             var visibleIds: [CGWindowID] = []
             for winInfo in infoList {
                 guard let layer = winInfo[kCGWindowLayer as String] as? Int, layer == 0,
                       let wid = winInfo[kCGWindowNumber as String] as? CGWindowID,
-                      let pid = winInfo[kCGWindowOwnerPID as String] as? pid_t, pid != currentPID,
+                      let pid = winInfo[kCGWindowOwnerPID as String] as? pid_t, regularPIDs.contains(pid),
                       let boundsDict = winInfo[kCGWindowBounds as String] as? [String: Any],
                       let bounds = CGRect(dictionaryRepresentation: boundsDict as CFDictionary),
                       bounds.width >= 80, bounds.height >= 80 else {
@@ -625,7 +642,8 @@ public class WindowManager {
             if matchedWindow == nil && item.isOnScreen {
                 for axWin in axWindows {
                     guard let frame = axFrame(of: axWin) else { continue }
-                    if (abs(frame.origin.x - item.bounds.origin.x) < 35 && abs(frame.origin.y - item.bounds.origin.y) < 35) ||
+                    // Position and size: windows of one app often share one of the two
+                    if (abs(frame.origin.x - item.bounds.origin.x) < 35 && abs(frame.origin.y - item.bounds.origin.y) < 35) &&
                        (abs(frame.width - item.bounds.size.width) < 35 && abs(frame.height - item.bounds.size.height) < 35) {
                         matchedWindow = axWin
                         break

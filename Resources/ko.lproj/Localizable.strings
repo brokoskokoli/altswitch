@@ -13,6 +13,8 @@
 "menu.language" = "언어";
 "menu.systemLanguage" = "시스템 언어";
 "menu.quit" = "AltSwitch 종료";
+"menu.secureInput" = "⚠️ 보안 키보드 입력이 켜져 있음 – 단축키가 차단됨";
+"menu.copyDiagnostics" = "진단 정보 복사";
 "shortcut.optionTab" = "Option + Tab (⌥-Tab)";
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "간결하게(포커스)";
@@ -32,6 +34,7 @@
 "overlay.hint.showCards" = "미리보기";
 "card.screenRecordingRequired" = "화면 기록 필요";
 "card.loading" = "로드 중…";
+"card.previewUnavailable" = "미리보기를 사용할 수 없음";
 "setup.windowTitle" = "AltSwitch에 오신 것을 환영합니다 — 초기 설정";
 "setup.welcome" = "AltSwitch에 오신 것을 환영합니다";
 "setup.subtitle" = "Windows 스타일 윈도우 전환기의 초기 설정 및 권한입니다.";

@@ -6,6 +6,32 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Secure keyboard entry:** the menu shows when another app (a password field, Terminal's
+  *Secure Keyboard Entry*) has secure keyboard entry on. macOS then gives key presses to no other
+  app, so ⌘-Tab brings up the system switcher; the README explains it under *Troubleshooting*.
+- **Copy Diagnostics** in the menu copies version, permissions and state for a bug report – no
+  window titles or app names.
+
+### Changed
+- **Keys inside the switcher:** while it is open, other keys do nothing. Before, ⌘Q out of habit
+  from the system switcher went to the app being left and quit it.
+- **⌃⌥-Tab** no longer opens the switcher in the ⌥-Tab mode.
+- **Smoother with busy apps:** an app that stops answering costs at most one timeout per press,
+  not one per window, and AltSwitch stops retrying to watch such an app on every press.
+- **Less work in the background:** previews are only kept for windows of apps the switcher lists.
+- When no previews can be captured on a macOS version, cards say so instead of "Loading…".
+
+### Fixed
+- **Stuck switcher:** if the release of the modifier key was missed (sleep, secure input), the
+  switcher stayed open and swallowed keys. The next key press now closes it and goes through.
+- **Accessibility permission taken away while running:** AltSwitch now removes its keyboard hook
+  and installs it again once the permission is back. An active hook without the permission can
+  leave the whole Mac without keyboard input.
+- **Wrong window raised:** when a window had to be found by its frame, a window of the same app
+  with only the same size (or only the same position) could be raised instead.
+- Removed an unused Apple Events permission text from Info.plist.
+
 ## [1.2.2] - 2026-11-19
 
 1.2.1 was tagged but never released; its changes are part of this release.

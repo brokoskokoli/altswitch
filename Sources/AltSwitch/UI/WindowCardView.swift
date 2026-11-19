@@ -113,6 +113,10 @@ struct WindowCardView: View {
                                 .foregroundColor(.orange)
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, 6)
+                            } else if !WindowManager.isCaptureAvailable {
+                                Text(verbatim: L("card.previewUnavailable"))
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.secondary)
                             } else if item.isOnScreen {
                                 // Off-screen windows cannot be captured: no image will come
                                 Text(verbatim: L("card.loading"))

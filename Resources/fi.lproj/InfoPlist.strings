@@ -2,5 +2,4 @@
 /* Permission texts macOS shows for AltSwitch (fi) */
 
 "NSAccessibilityUsageDescription" = "AltSwitch tarvitsee käyttöapuoikeudet ikkunoiden aktivoimiseen ja yleisten näppäinoikoteiden sieppaamiseen.";
-"NSAppleEventsUsageDescription" = "AltSwitch tarvitsee käyttöapuoikeudet ikkunoiden aktivoimiseen ja yleisten näppäinoikoteiden sieppaamiseen.";
 "NSScreenCaptureUsageDescription" = "AltSwitch tarvitsee näytön tallennuksen oikeudet näyttääkseen ikkunoiden reaaliaikaiset esikatselut vaihtajassa.";

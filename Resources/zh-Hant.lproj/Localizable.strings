@@ -13,6 +13,8 @@
 "menu.language" = "語言";
 "menu.systemLanguage" = "系統語言";
 "menu.quit" = "結束 AltSwitch";
+"menu.secureInput" = "⚠️ 安全鍵盤輸入已開啟 – 快速鍵被阻擋";
+"menu.copyDiagnostics" = "拷貝診斷資訊";
 "shortcut.optionTab" = "Option + Tab (⌥-Tab)";
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "精簡（聚焦）";
@@ -32,6 +34,7 @@
 "overlay.hint.showCards" = "預覽";
 "card.screenRecordingRequired" = "需要螢幕錄製權限";
 "card.loading" = "正在載入…";
+"card.previewUnavailable" = "無法預覽";
 "setup.windowTitle" = "歡迎使用 AltSwitch — 初始設定";
 "setup.welcome" = "歡迎使用 AltSwitch";
 "setup.subtitle" = "Windows 風格視窗切換器的初始設定與權限。";

@@ -9,11 +9,8 @@ public class AutostartManager {
     private init() {}
 
     public var isAutostartEnabled: Bool {
-        if #available(macOS 13.0, *) {
-            let status = SMAppService.mainApp.status
-            return status == .enabled || status == .requiresApproval
-        }
-        return false
+        let status = SMAppService.mainApp.status
+        return status == .enabled || status == .requiresApproval
     }
 
     private let initializedKey = "AltSwitch_AutostartInitialized"
@@ -34,30 +31,27 @@ public class AutostartManager {
     }
 
     public func setAutostart(enabled: Bool, openSettingsIfApprovalNeeded: Bool = true) -> Bool {
-        if #available(macOS 13.0, *) {
-            do {
-                if enabled {
-                    if SMAppService.mainApp.status != .enabled {
-                        try SMAppService.mainApp.register()
-                    }
-                } else {
-                    if SMAppService.mainApp.status != .notRegistered {
-                        try SMAppService.mainApp.unregister()
-                    }
+        do {
+            if enabled {
+                if SMAppService.mainApp.status != .enabled {
+                    try SMAppService.mainApp.register()
                 }
-
-                if openSettingsIfApprovalNeeded && SMAppService.mainApp.status == .requiresApproval {
-                    SMAppService.openSystemSettingsLoginItems()
+            } else {
+                if SMAppService.mainApp.status != .notRegistered {
+                    try SMAppService.mainApp.unregister()
                 }
-                return true
-            } catch {
-                NSLog("AltSwitch: AutostartManager error: %@", error.localizedDescription)
-                if openSettingsIfApprovalNeeded && SMAppService.mainApp.status == .requiresApproval {
-                    SMAppService.openSystemSettingsLoginItems()
-                }
-                return false
             }
+
+            if openSettingsIfApprovalNeeded && SMAppService.mainApp.status == .requiresApproval {
+                SMAppService.openSystemSettingsLoginItems()
+            }
+            return true
+        } catch {
+            NSLog("AltSwitch: AutostartManager error: %@", error.localizedDescription)
+            if openSettingsIfApprovalNeeded && SMAppService.mainApp.status == .requiresApproval {
+                SMAppService.openSystemSettingsLoginItems()
+            }
+            return false
         }
-        return false
     }
 }

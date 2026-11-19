@@ -37,6 +37,12 @@
 /* Menu item */
 "menu.quit" = "Quit AltSwitch";
 
+/* Menu item, disabled: another app turned on secure keyboard entry (password field, Terminal), so macOS gives the shortcut to no app */
+"menu.secureInput" = "⚠️ Secure keyboard entry is on – the shortcut is blocked";
+
+/* Menu item: copies version, permissions and state for a bug report */
+"menu.copyDiagnostics" = "Copy Diagnostics";
+
 /* Shortcut choice */
 "shortcut.optionTab" = "Option + Tab (⌥-Tab)";
 
@@ -93,6 +99,9 @@
 
 /* Card while the preview loads */
 "card.loading" = "Loading…";
+
+/* Card when this macOS version cannot capture window images */
+"card.previewUnavailable" = "Preview not available";
 
 /* Title bar of the setup assistant */
 "setup.windowTitle" = "Welcome to AltSwitch — Initial Setup";

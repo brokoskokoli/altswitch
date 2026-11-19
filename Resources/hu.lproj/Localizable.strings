@@ -13,6 +13,8 @@
 "menu.language" = "Nyelv";
 "menu.systemLanguage" = "Rendszernyelv";
 "menu.quit" = "Kilépés az AltSwitchből";
+"menu.secureInput" = "⚠️ A biztonságos billentyűzetbevitel be van kapcsolva – a billentyűparancs le van tiltva";
+"menu.copyDiagnostics" = "Diagnosztika másolása";
 "shortcut.optionTab" = "Option + Tab (⌥-Tab)";
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "Kompakt (fókusz)";
@@ -32,6 +34,7 @@
 "overlay.hint.showCards" = "Előnézetek";
 "card.screenRecordingRequired" = "Képernyőfelvétel szükséges";
 "card.loading" = "Betöltés…";
+"card.previewUnavailable" = "Az előnézet nem érhető el";
 "setup.windowTitle" = "Üdvözöl az AltSwitch — Első beállítás";
 "setup.welcome" = "Üdvözöl az AltSwitch";
 "setup.subtitle" = "A Windows-stílusú ablakváltó első beállítása és engedélyei.";

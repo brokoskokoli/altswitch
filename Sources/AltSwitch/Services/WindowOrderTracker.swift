@@ -11,6 +11,11 @@ public class WindowOrderTracker {
     /// Window IDs, most recently focused first. Main thread only.
     private var recentWindowIDs: [CGWindowID] = []
     private var observers: [pid_t: AXObserver] = [:]
+    /// When registering for an app last failed. Every press tries the apps without an observer
+    /// again, one after the other on the main thread: an app that does not answer would cost up
+    /// to its timeout on each press. Main thread only.
+    private var failedAt: [pid_t: CFTimeInterval] = [:]
+    private let retryAfterFailure: CFTimeInterval = 30
 
     private init() {}
 
@@ -35,6 +40,7 @@ public class WindowOrderTracker {
         center.addObserver(forName: NSWorkspace.didTerminateApplicationNotification, object: nil, queue: .main) { [weak self] note in
             guard let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication else { return }
             self?.stopObserving(app.processIdentifier)
+            self?.failedAt[app.processIdentifier] = nil
         }
     }
 
@@ -108,6 +114,9 @@ public class WindowOrderTracker {
               observers[pid] == nil else {
             return
         }
+        if let failed = failedAt[pid], CACurrentMediaTime() - failed < retryAfterFailure {
+            return
+        }
 
         var observer: AXObserver?
         let callback: AXObserverCallback = { _, element, _, refcon in
@@ -116,14 +125,17 @@ public class WindowOrderTracker {
             tracker.noteFocused(window: element)
         }
         guard AXObserverCreate(pid, callback, &observer) == .success, let observer = observer else {
+            failedAt[pid] = CACurrentMediaTime()
             return
         }
         let appElement = AXUIElementCreateApplication(pid)
         AXUIElementSetMessagingTimeout(appElement, 0.1)
         let refcon = Unmanaged.passUnretained(self).toOpaque()
         guard AXObserverAddNotification(observer, appElement, kAXFocusedWindowChangedNotification as CFString, refcon) == .success else {
+            failedAt[pid] = CACurrentMediaTime()
             return
         }
+        failedAt[pid] = nil
         CFRunLoopAddSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(observer), .commonModes)
         observers[pid] = observer
     }

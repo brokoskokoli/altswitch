@@ -13,6 +13,8 @@
 "menu.language" = "Γλώσσα";
 "menu.systemLanguage" = "Γλώσσα συστήματος";
 "menu.quit" = "Τερματισμός AltSwitch";
+"menu.secureInput" = "⚠️ Η ασφαλής εισαγωγή πληκτρολογίου είναι ενεργή – η συντόμευση μπλοκάρεται";
+"menu.copyDiagnostics" = "Αντιγραφή διαγνωστικών";
 "shortcut.optionTab" = "Option + Tab (⌥-Tab)";
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "Συμπαγής (εστίαση)";
@@ -32,6 +34,7 @@
 "overlay.hint.showCards" = "Προεπισκοπήσεις";
 "card.screenRecordingRequired" = "Απαιτείται Εγγραφή οθόνης";
 "card.loading" = "Φόρτωση…";
+"card.previewUnavailable" = "Η προεπισκόπηση δεν είναι διαθέσιμη";
 "setup.windowTitle" = "Καλώς ορίσατε στο AltSwitch — Αρχική ρύθμιση";
 "setup.welcome" = "Καλώς ορίσατε στο AltSwitch";
 "setup.subtitle" = "Αρχική ρύθμιση και άδειες για την εναλλαγή παραθύρων σε στιλ Windows.";

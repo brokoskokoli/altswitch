@@ -13,6 +13,8 @@
 "menu.language" = "Limbă";
 "menu.systemLanguage" = "Limba sistemului";
 "menu.quit" = "Închide AltSwitch";
+"menu.secureInput" = "⚠️ Introducerea securizată de la tastatură este activă – scurtătura este blocată";
+"menu.copyDiagnostics" = "Copiază diagnosticul";
 "shortcut.optionTab" = "Option + Tab (⌥-Tab)";
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "Compact (focalizare)";
@@ -32,6 +34,7 @@
 "overlay.hint.showCards" = "Previzualizări";
 "card.screenRecordingRequired" = "Este necesară înregistrarea ecranului";
 "card.loading" = "Se încarcă…";
+"card.previewUnavailable" = "Previzualizare indisponibilă";
 "setup.windowTitle" = "Bun venit în AltSwitch — Configurare inițială";
 "setup.welcome" = "Bun venit în AltSwitch";
 "setup.subtitle" = "Configurarea inițială și permisiunile pentru comutatorul de ferestre în stil Windows.";

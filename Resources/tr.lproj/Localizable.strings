@@ -13,6 +13,8 @@
 "menu.language" = "Dil";
 "menu.systemLanguage" = "Sistem Dili";
 "menu.quit" = "AltSwitch’ten Çık";
+"menu.secureInput" = "⚠️ Güvenli klavye girişi açık – kısayol engellendi";
+"menu.copyDiagnostics" = "Tanılamayı kopyala";
 "shortcut.optionTab" = "Option + Tab (⌥-Tab)";
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "Kompakt (odak)";
@@ -32,6 +34,7 @@
 "overlay.hint.showCards" = "Önizlemeler";
 "card.screenRecordingRequired" = "Ekran Kaydı gerekli";
 "card.loading" = "Yükleniyor…";
+"card.previewUnavailable" = "Önizleme kullanılamıyor";
 "setup.windowTitle" = "AltSwitch’e hoş geldiniz — İlk kurulum";
 "setup.welcome" = "AltSwitch’e hoş geldiniz";
 "setup.subtitle" = "Windows tarzı pencere değiştirici için ilk kurulum ve izinler.";

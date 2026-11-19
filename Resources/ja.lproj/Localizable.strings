@@ -13,6 +13,8 @@
 "menu.language" = "言語";
 "menu.systemLanguage" = "システムの言語";
 "menu.quit" = "AltSwitchを終了";
+"menu.secureInput" = "⚠️ セキュアキーボード入力がオンです – ショートカットはブロックされています";
+"menu.copyDiagnostics" = "診断情報をコピー";
 "shortcut.optionTab" = "Option + Tab (⌥-Tab)";
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "コンパクト（フォーカス）";
@@ -32,6 +34,7 @@
 "overlay.hint.showCards" = "プレビュー";
 "card.screenRecordingRequired" = "画面収録が必要です";
 "card.loading" = "読み込み中…";
+"card.previewUnavailable" = "プレビューを利用できません";
 "setup.windowTitle" = "AltSwitchへようこそ — 初期設定";
 "setup.welcome" = "AltSwitchへようこそ";
 "setup.subtitle" = "Windowsスタイルのウインドウ切り替えの初期設定とアクセス権。";

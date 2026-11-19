@@ -13,6 +13,8 @@
 "menu.language" = "Язык";
 "menu.systemLanguage" = "Язык системы";
 "menu.quit" = "Завершить AltSwitch";
+"menu.secureInput" = "⚠️ Включён безопасный ввод с клавиатуры – сочетание клавиш заблокировано";
+"menu.copyDiagnostics" = "Скопировать диагностику";
 "shortcut.optionTab" = "Option + Tab (⌥-Tab)";
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "Компактный (фокус)";
@@ -32,6 +34,7 @@
 "overlay.hint.showCards" = "Миниатюры";
 "card.screenRecordingRequired" = "Требуется запись экрана";
 "card.loading" = "Загрузка…";
+"card.previewUnavailable" = "Предпросмотр недоступен";
 "setup.windowTitle" = "Добро пожаловать в AltSwitch — Первоначальная настройка";
 "setup.welcome" = "Добро пожаловать в AltSwitch";
 "setup.subtitle" = "Первоначальная настройка и разрешения для переключателя окон в стиле Windows.";

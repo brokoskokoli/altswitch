@@ -2,5 +2,4 @@
 /* Permission texts macOS shows for AltSwitch (da) */
 
 "NSAccessibilityUsageDescription" = "AltSwitch skal have adgang til Tilgængelighed for at aktivere vinduer og opfange globale tastaturgenveje.";
-"NSAppleEventsUsageDescription" = "AltSwitch skal have adgang til Tilgængelighed for at aktivere vinduer og opfange globale tastaturgenveje.";
 "NSScreenCaptureUsageDescription" = "AltSwitch skal have adgang til skærmoptagelse for at vise live-eksempler af vinduer i skifteren.";

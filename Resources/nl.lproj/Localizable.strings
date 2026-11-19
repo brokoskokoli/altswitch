@@ -13,6 +13,8 @@
 "menu.language" = "Taal";
 "menu.systemLanguage" = "Systeemtaal";
 "menu.quit" = "Stop AltSwitch";
+"menu.secureInput" = "⚠️ Beveiligde toetsenbordinvoer staat aan – de sneltoets is geblokkeerd";
+"menu.copyDiagnostics" = "Diagnose kopiëren";
 "shortcut.optionTab" = "Option + Tab (⌥-Tab)";
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "Compact (focus)";
@@ -32,6 +34,7 @@
 "overlay.hint.showCards" = "Voorbeelden";
 "card.screenRecordingRequired" = "Schermopname vereist";
 "card.loading" = "Laden…";
+"card.previewUnavailable" = "Voorvertoning niet beschikbaar";
 "setup.windowTitle" = "Welkom bij AltSwitch — Eerste configuratie";
 "setup.welcome" = "Welkom bij AltSwitch";
 "setup.subtitle" = "Eerste configuratie en toestemmingen voor de vensterwisselaar in Windows-stijl.";

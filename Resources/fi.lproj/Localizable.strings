@@ -13,6 +13,8 @@
 "menu.language" = "Kieli";
 "menu.systemLanguage" = "Järjestelmän kieli";
 "menu.quit" = "Lopeta AltSwitch";
+"menu.secureInput" = "⚠️ Suojattu näppäimistösyöte on päällä – pikanäppäin on estetty";
+"menu.copyDiagnostics" = "Kopioi diagnostiikka";
 "shortcut.optionTab" = "Option + Tab (⌥-Tab)";
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "Kompakti (kohdistus)";
@@ -32,6 +34,7 @@
 "overlay.hint.showCards" = "Esikatselut";
 "card.screenRecordingRequired" = "Näytön tallennus vaaditaan";
 "card.loading" = "Ladataan…";
+"card.previewUnavailable" = "Esikatselu ei ole käytettävissä";
 "setup.windowTitle" = "Tervetuloa AltSwitchiin — Käyttöönotto";
 "setup.welcome" = "Tervetuloa AltSwitchiin";
 "setup.subtitle" = "Windows-tyylisen ikkunanvaihtajan käyttöönotto ja käyttöoikeudet.";

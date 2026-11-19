@@ -95,6 +95,21 @@ Beim ersten Start fragt der Einrichtungsassistent nach zwei Berechtigungen unter
 | Per Maus wechseln | Karte anklicken |
 | Abbrechen | `Esc` |
 
+Bei offenem Umschalter bewirken andere Tasten nichts: `⌘Q` aus Gewohnheit beendet nicht die App,
+die du gerade verlässt.
+
+## Fehlerbehebung
+
+**`⌘-Tab` zeigt den macOS-App-Umschalter statt AltSwitch.** Eine andere App hat die *sichere
+Tastatureingabe* eingeschaltet – ein Passwortfeld hat den Fokus, oder *Terminal → Sichere
+Tastatureingabe* ist an. macOS gibt Tastendrücke dann an keine andere App weiter, auch nicht an
+AltSwitch. Das AltSwitch-Menü zeigt das an, solange es so ist; verlasse das Passwortfeld oder
+schalte die Option aus.
+
+**Etwas anderes klappt nicht.** *Diagnose kopieren* im AltSwitch-Menü kopiert Version,
+Berechtigungen und Zustand (ohne Fenstertitel und App-Namen) für einen
+[Fehlerbericht](https://github.com/brokoskokoli/altswitch/issues/new/choose).
+
 ## Aus dem Quellcode bauen
 
 Benötigt die Xcode Command Line Tools (`xcode-select --install`).
@@ -106,7 +121,7 @@ cd altswitch
 open .build/AltSwitch.app
 ```
 
-`ARCHS=arm64 ./build.sh` baut nur für Apple Silicon (schneller). Lokale Builds sind ad hoc
+`ARCHS=arm64 ./build.sh` baut nur für Apple Silicon (schneller), `swift test` führt die Tests aus. Lokale Builds sind ad hoc
 signiert; macOS fragt für so einen Build die Berechtigungen erneut ab.
 
 ## Datenschutz

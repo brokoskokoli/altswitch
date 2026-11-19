@@ -2,7 +2,7 @@
 
 import Cocoa
 
-public struct WindowItem: Identifiable, Equatable {
+public struct WindowItem: Identifiable {
     public let id: CGWindowID
     public let pid: pid_t
     public let appName: String
@@ -40,7 +40,4 @@ public struct WindowItem: Identifiable, Equatable {
         self.isOnScreen = isOnScreen
     }
 
-    public static func == (lhs: WindowItem, rhs: WindowItem) -> Bool {
-        lhs.id == rhs.id
-    }
 }

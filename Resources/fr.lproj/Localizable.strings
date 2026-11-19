@@ -13,6 +13,8 @@
 "menu.language" = "Langue";
 "menu.systemLanguage" = "Langue du système";
 "menu.quit" = "Quitter AltSwitch";
+"menu.secureInput" = "⚠️ La saisie sécurisée au clavier est activée – le raccourci est bloqué";
+"menu.copyDiagnostics" = "Copier les diagnostics";
 "shortcut.optionTab" = "Option + Tab (⌥-Tab)";
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "Compact (focus)";
@@ -32,6 +34,7 @@
 "overlay.hint.showCards" = "Aperçus";
 "card.screenRecordingRequired" = "Enregistrement de l’écran requis";
 "card.loading" = "Chargement…";
+"card.previewUnavailable" = "Aperçu non disponible";
 "setup.windowTitle" = "Bienvenue dans AltSwitch — Configuration initiale";
 "setup.welcome" = "Bienvenue dans AltSwitch";
 "setup.subtitle" = "Configuration initiale et autorisations du sélecteur de fenêtres façon Windows.";

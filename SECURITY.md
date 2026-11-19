@@ -2,8 +2,9 @@
 # Security Policy
 
 AltSwitch runs with the Accessibility and (optionally) Screen Recording permissions and makes no
-network connections. We take bugs that could compromise your computer
-seriously.
+network connections. Its keyboard hook reads only key codes and modifier keys, to recognize the
+shortcut and the keys used inside the switcher; it records and stores no typed text. We take bugs
+that could compromise your computer seriously.
 
 ## Supported versions
 
@@ -12,7 +13,7 @@ Only the latest release receives security fixes. Updates are available on the
 
 | Version | Supported |
 |---|---|
-| 1.0.x (latest) | ✅ |
+| latest release | ✅ |
 | older | ❌ |
 
 ## Reporting a vulnerability

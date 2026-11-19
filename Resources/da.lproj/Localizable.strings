@@ -13,6 +13,8 @@
 "menu.language" = "Sprog";
 "menu.systemLanguage" = "Systemsprog";
 "menu.quit" = "Slut AltSwitch";
+"menu.secureInput" = "⚠️ Sikker tastaturindtastning er slået til – genvejen er blokeret";
+"menu.copyDiagnostics" = "Kopiér diagnosticering";
 "shortcut.optionTab" = "Option + Tab (⌥-Tab)";
 "shortcut.cmdTab" = "Command + Tab (⌘-Tab)";
 "layout.compact" = "Kompakt (fokus)";
@@ -32,6 +34,7 @@
 "overlay.hint.showCards" = "Forhåndsvisninger";
 "card.screenRecordingRequired" = "Skærmoptagelse påkrævet";
 "card.loading" = "Indlæser…";
+"card.previewUnavailable" = "Eksempel ikke tilgængeligt";
 "setup.windowTitle" = "Velkommen til AltSwitch — Første indstilling";
 "setup.welcome" = "Velkommen til AltSwitch";
 "setup.subtitle" = "Første indstilling og tilladelser til vinduesskifteren i Windows-stil.";

@@ -228,14 +228,6 @@ public class OverlayPanel: NSPanel {
         viewModel.navigate(direction: direction)
     }
 
-    public func navigate(forward: Bool) {
-        if forward {
-            viewModel.cycleNext()
-        } else {
-            viewModel.cyclePrevious()
-        }
-    }
-
     public func confirmSelection() {
         viewModel.selectCurrent()
     }
