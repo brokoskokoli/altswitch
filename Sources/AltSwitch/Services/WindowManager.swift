@@ -113,6 +113,13 @@ private enum SkyLight {
     }
 }
 
+/// What Accessibility says about an app's windows.
+private struct AXWindowList {
+    let windows: [AXWindowInfo]
+    /// false if the app stopped answering before all its windows were read
+    let isComplete: Bool
+}
+
 /// What Accessibility says about one window of an app.
 private struct AXWindowInfo {
     let element: AXUIElement
@@ -263,19 +270,25 @@ public class WindowManager {
         // Windows as each app reports them. An app missing here did not answer (busy or timed out).
         // All apps at once: each call waits for the app to answer, so one app after the other the
         // waits add up (~10–40 ms here), and one app running into the timeout would delay the rest.
-        var fetched = [[AXWindowInfo]?](repeating: nil, count: regularApps.count)
+        var fetched = [AXWindowList?](repeating: nil, count: regularApps.count)
         fetched.withUnsafeMutableBufferPointer { slots in
             DispatchQueue.concurrentPerform(iterations: regularApps.count) { index in
                 slots[index] = axWindowInfos(of: regularApps[index].processIdentifier)
             }
         }
         var axWindowsByPID: [pid_t: [AXWindowInfo]] = [:]
+        // Apps that reported all their windows; an app that stopped answering midway is not
+        // among them, its other windows are judged as if it had not answered at all
+        var completeAXPIDs = Set<pid_t>()
         var axWindowByID: [CGWindowID: AXWindowInfo] = [:]
-        for (app, windows) in zip(regularApps, fetched) {
-            guard let windows = windows else { continue }
+        for (app, list) in zip(regularApps, fetched) {
+            guard let list = list else { continue }
             let pid = app.processIdentifier
-            axWindowsByPID[pid] = windows
-            for window in windows where window.id != 0 {
+            axWindowsByPID[pid] = list.windows
+            if list.isComplete {
+                completeAXPIDs.insert(pid)
+            }
+            for window in list.windows where window.id != 0 {
                 axWindowByID[window.id] = window
             }
         }
@@ -332,7 +345,7 @@ public class WindowManager {
                 // Accessibility does not list windows on other Spaces. Off-screen windows without a
                 // title or not on any Space are helpers (menu bar, status items, drag images …).
                 guard !cgTitle.isEmpty,
-                      axWindowsByPID[pid] == nil || isOnOtherSpace(wid),
+                      !completeAXPIDs.contains(pid) || isOnOtherSpace(wid),
                       let spaces = SkyLight.spaces(of: wid), !spaces.isEmpty else {
                     continue
                 }
@@ -403,7 +416,7 @@ public class WindowManager {
 
     /// The app's windows with the attributes needed to sort out junk, one Accessibility round trip
     /// per window. nil if the app does not answer.
-    private func axWindowInfos(of pid: pid_t) -> [AXWindowInfo]? {
+    private func axWindowInfos(of pid: pid_t) -> AXWindowList? {
         let appElement = AXUIElementCreateApplication(pid)
         AXUIElementSetMessagingTimeout(appElement, 0.2)
         var windowListValue: AnyObject?
@@ -422,9 +435,9 @@ public class WindowManager {
             var title = ""
             let result = AXUIElementCopyMultipleAttributeValues(window, attributes, AXCopyMultipleAttributeOptions(rawValue: 0), &values)
             // The app stopped answering: each further window would wait for the timeout again.
-            // Keep what was read; the rest of its windows are judged by the window list alone.
+            // Keep what was read and mark the list incomplete; with nothing read it counts as no answer.
             if result == .cannotComplete {
-                break
+                return infos.isEmpty ? nil : AXWindowList(windows: infos, isComplete: false)
             }
             if result == .success, let array = values as? [AnyObject], array.count == 4 {
                 // Attributes that could not be read come back as AXError values and fail these casts
@@ -443,7 +456,7 @@ public class WindowManager {
                 && (subrole == kAXStandardWindowSubrole as String || subrole == kAXDialogSubrole as String)
             infos.append(AXWindowInfo(element: window, id: wid, isMinimized: isMinimized, title: title, isStandard: isStandard))
         }
-        return infos
+        return AXWindowList(windows: infos, isComplete: true)
     }
 
     private func axFrame(of window: AXUIElement) -> CGRect? {

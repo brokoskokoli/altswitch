@@ -95,8 +95,8 @@ Beim ersten Start fragt der Einrichtungsassistent nach zwei Berechtigungen unter
 | Per Maus wechseln | Karte anklicken |
 | Abbrechen | `Esc` |
 
-Bei offenem Umschalter bewirken andere Tasten nichts: `⌘Q` aus Gewohnheit beendet nicht die App,
-die du gerade verlässt.
+Bei offenem Umschalter bewirken andere Tasten und Kurzbefehle – von Apps wie von macOS – nichts:
+`⌘Q` aus Gewohnheit beendet nicht die App, die du gerade verlässt.
 
 ## Fehlerbehebung
 

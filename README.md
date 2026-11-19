@@ -92,8 +92,8 @@ Security*:
 | Switch by mouse | click a card |
 | Cancel | `Esc` |
 
-While the switcher is open, other keys do nothing: `⌘Q` out of habit does not quit the app you are
-leaving.
+While the switcher is open, other keys and shortcuts – of apps and of macOS – do nothing: `⌘Q` out
+of habit does not quit the app you are leaving.
 
 ## Troubleshooting
 
