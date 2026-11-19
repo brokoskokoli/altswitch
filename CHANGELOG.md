@@ -6,6 +6,19 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-19
+
+### Added
+- **Close windows from the switcher:** hold `Q` and click a card or row – the window closes as with
+  its close button, so the app can still ask to save. The switcher stays open for the next one.
+  Can be turned off in the menu (*Q + Click Closes Windows*).
+
+### Changed
+- **Smooth scrolling with the mouse:** near the top or bottom edge of the list (left or right in the
+  carousel) it now scrolls continuously, slowly at first and faster the closer the pointer gets to
+  the edge. Before, a card touched at the edge was centred at once, which moved the next card under
+  the pointer and made the list race away.
+
 ## [1.2.3] - 2026-11-19
 
 ### Added
@@ -144,7 +157,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 First version (unsigned, withdrawn).
 
-[Unreleased]: https://github.com/brokoskokoli/altswitch/compare/v1.2.3...HEAD
+[Unreleased]: https://github.com/brokoskokoli/altswitch/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/brokoskokoli/altswitch/compare/v1.2.3...v1.3.0
 [1.2.3]: https://github.com/brokoskokoli/altswitch/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/brokoskokoli/altswitch/compare/v1.2.0...v1.2.2
 [1.2.0]: https://github.com/brokoskokoli/altswitch/compare/v1.1.3...v1.2.0
