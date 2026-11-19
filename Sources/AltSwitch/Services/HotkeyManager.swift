@@ -6,7 +6,8 @@ import ApplicationServices
 import Combine
 
 public protocol HotkeyManagerDelegate: AnyObject {
-    func hotkeyTriggered(forward: Bool)
+    /// `session` identifies this opening of the switcher; pass it to `endSession(_:)`.
+    func hotkeyTriggered(forward: Bool, session: UInt64)
     func hotkeyCycle(forward: Bool)
     func hotkeyNavigate(direction: NavigationDirection)
     /// G while the switcher is open: cards ⇄ grouped list
@@ -20,15 +21,12 @@ public class HotkeyManager {
 
     public weak var delegate: HotkeyManagerDelegate?
 
-    /// Set from the main thread, read and reset on the tap thread.
-    public var isOverlayActive: Bool {
-        get { lock.locked { overlayActive } }
-        set { lock.locked { setOverlayActive(newValue) } }
-    }
-
     /// The tap's state. The tap runs on its own thread, so all of it is guarded by `lock`.
     private let lock = NSLock()
     private var overlayActive = false
+    /// Counts the openings of the switcher. The main thread may run behind the tap: when it
+    /// closes the switcher of an earlier opening, the current one must stay open.
+    private var session: UInt64 = 0
     private var activeTriggerModifier: CGEventFlags?
     private var wasShiftDown: Bool = false
     private var shiftWasUsedWithKey: Bool = false
@@ -100,6 +98,16 @@ public class HotkeyManager {
         }
     }
 
+    /// The main thread closed the switcher of `session`. Ignored if the tap has opened a newer one
+    /// since, or closed this one itself.
+    public func endSession(_ session: UInt64) {
+        lock.locked {
+            if self.session == session {
+                setOverlayActive(false)
+            }
+        }
+    }
+
     /// Lock must be held.
     private func setOverlayActive(_ active: Bool) {
         overlayActive = active
@@ -127,8 +135,9 @@ public class HotkeyManager {
             options: .defaultTap,
             eventsOfInterest: eventMask,
             callback: { proxy, type, event, refcon -> Unmanaged<CGEvent>? in
+                // The event is not ours: handing it back must not retain it (one leak per key press)
                 guard let refcon = refcon else {
-                    return Unmanaged.passRetained(event)
+                    return Unmanaged.passUnretained(event)
                 }
                 let manager = Unmanaged<HotkeyManager>.fromOpaque(refcon).takeUnretainedValue()
                 return manager.handleEvent(proxy: proxy, type: type, event: event)
@@ -196,9 +205,11 @@ public class HotkeyManager {
                 if !overlayActive {
                     setOverlayActive(true)
                     activeTriggerModifier = triggerFlag
+                    session &+= 1
+                    let session = self.session
                     DispatchQueue.main.async { [weak self] in
                         guard let self = self else { return }
-                        self.delegate?.hotkeyTriggered(forward: forward)
+                        self.delegate?.hotkeyTriggered(forward: forward, session: session)
                     }
                 } else {
                     DispatchQueue.main.async { [weak self] in
@@ -273,7 +284,7 @@ public class HotkeyManager {
                     DispatchQueue.main.async { [weak self] in
                         self?.delegate?.hotkeyConfirmed()
                     }
-                    return Unmanaged.passRetained(event)
+                    return Unmanaged.passUnretained(event)
                 }
 
                 // Trigger modifier is still held down!
@@ -306,7 +317,7 @@ public class HotkeyManager {
             }
         }
 
-        return Unmanaged.passRetained(event)
+        return Unmanaged.passUnretained(event)
     }
 }
 

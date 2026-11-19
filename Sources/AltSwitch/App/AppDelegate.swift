@@ -7,6 +7,8 @@ public class AppDelegate: NSObject, NSApplicationDelegate, HotkeyManagerDelegate
     private var overlayPanel: OverlayPanel?
     /// Keeps App Nap away: a napping menu bar app reacts late to the shortcut and pages out the overlay.
     private var noNapActivity: NSObjectProtocol?
+    /// The switcher opening the overlay shows (see HotkeyManager.endSession)
+    private var presentedSession: UInt64 = 0
 
     public func applicationDidFinishLaunching(_ notification: Notification) {
         let launchStart = PerfLog.now()
@@ -44,8 +46,9 @@ public class AppDelegate: NSObject, NSApplicationDelegate, HotkeyManagerDelegate
         panel.onWindowChosen = { [weak self] item in
             self?.handleWindowSelection(item)
         }
-        panel.onDismissed = {
-            HotkeyManager.shared.isOverlayActive = false
+        panel.onDismissed = { [weak self] in
+            guard let self = self else { return }
+            HotkeyManager.shared.endSession(self.presentedSession)
         }
         self.overlayPanel = panel
 
@@ -108,16 +111,17 @@ public class AppDelegate: NSObject, NSApplicationDelegate, HotkeyManagerDelegate
 
     // MARK: - HotkeyManagerDelegate
 
-    public func hotkeyTriggered(forward: Bool) {
+    public func hotkeyTriggered(forward: Bool, session: UInt64) {
         // The grouped list shows titles only: no previews to look up or capture
         let pressStart = PerfLog.now()
         let showsCards = AppSettings.shared.switcherLayout.showsCards
         let openWindows = PerfLog.measure("press window list") { WindowManager.shared.getOpenWindows() }
         let windows = showsCards ? WindowManager.shared.cachedThumbnails(for: openWindows) : openWindows
         guard !windows.isEmpty else {
-            HotkeyManager.shared.isOverlayActive = false
+            HotkeyManager.shared.endSession(session)
             return
         }
+        presentedSession = session
 
         // In MRU front-to-back: index 0 is currently active window.
         // Option-Tab should select the second window (index 1), Shift-Option-Tab selects the last.
@@ -173,17 +177,17 @@ public class AppDelegate: NSObject, NSApplicationDelegate, HotkeyManagerDelegate
     }
 
     public func hotkeyConfirmed() {
-        HotkeyManager.shared.isOverlayActive = false
-        overlayPanel?.confirmSelection()
+        // Nothing shown (no windows): there is nothing to confirm, and the panel's last selection
+        // is from an earlier opening
+        guard let panel = overlayPanel, panel.isVisible else { return }
+        panel.confirmSelection()
     }
 
     public func hotkeyCancelled() {
-        HotkeyManager.shared.isOverlayActive = false
         overlayPanel?.cancel()
     }
 
     private func handleWindowSelection(_ item: WindowItem) {
-        HotkeyManager.shared.isOverlayActive = false
         WindowManager.shared.activateWindow(item)
     }
 }
