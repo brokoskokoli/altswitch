@@ -6,6 +6,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.2.3] - 2026-11-19
+
 ### Added
 - **Secure keyboard entry:** the menu shows when another app (a password field, Terminal's
   *Secure Keyboard Entry*) has secure keyboard entry on. macOS then gives key presses to no other
@@ -24,10 +26,13 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ### Fixed
 - **Stuck switcher:** if the release of the modifier key was missed (sleep, secure input), the
-  switcher stayed open and swallowed keys. The next key press now closes it and goes through.
+  switcher stayed open and swallowed keys. Pressing the modifier again or any key without it now
+  closes the switcher, and the key or shortcut goes through. When macOS switches the keyboard hook
+  off for a moment, AltSwitch checks the modifier keys as soon as it is back.
 - **Accessibility permission taken away while running:** AltSwitch now removes its keyboard hook
-  and installs it again once the permission is back. An active hook without the permission can
-  leave the whole Mac without keyboard input.
+  and installs it again once the permission is back, and no longer switches the hook back on without
+  the permission. An active hook without the permission can leave the whole Mac without keyboard
+  input. A hook that macOS switched off for good is replaced.
 - **Wrong window raised:** when a window had to be found by its frame, a window of the same app
   with only the same size (or only the same position) could be raised instead.
 - Removed an unused Apple Events permission text from Info.plist.
@@ -139,7 +144,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 First version (unsigned, withdrawn).
 
-[Unreleased]: https://github.com/brokoskokoli/altswitch/compare/v1.2.2...HEAD
+[Unreleased]: https://github.com/brokoskokoli/altswitch/compare/v1.2.3...HEAD
+[1.2.3]: https://github.com/brokoskokoli/altswitch/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/brokoskokoli/altswitch/compare/v1.2.0...v1.2.2
 [1.2.0]: https://github.com/brokoskokoli/altswitch/compare/v1.1.3...v1.2.0
 [1.1.3]: https://github.com/brokoskokoli/altswitch/compare/v1.1.2...v1.1.3
