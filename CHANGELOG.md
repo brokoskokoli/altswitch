@@ -6,6 +6,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-11-19
+
 ### Changed
 - **Less memory and CPU in the background:** after an app switch only the windows of the app you
   left are captured for the previews, not every window on screen. Each capture loses 176 bytes
@@ -168,7 +170,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 First version (unsigned, withdrawn).
 
-[Unreleased]: https://github.com/brokoskokoli/altswitch/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/brokoskokoli/altswitch/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/brokoskokoli/altswitch/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/brokoskokoli/altswitch/compare/v1.2.3...v1.3.0
 [1.2.3]: https://github.com/brokoskokoli/altswitch/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/brokoskokoli/altswitch/compare/v1.2.0...v1.2.2
