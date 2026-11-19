@@ -6,14 +6,20 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-## [1.2.1] - 2026-11-19
+## [1.2.2] - 2026-11-19
+
+1.2.1 was tagged but never released; its changes are part of this release.
 
 ### Fixed
+- **Memory:** AltSwitch no longer keeps a copy of every key press (about 1 KB each), so its memory
+  use stays flat however long it runs.
 - **System app switcher instead of AltSwitch:** now and then ⌘-Tab brought up macOS's own app
   switcher, and only the second try opened AltSwitch. The shortcut was handled on the same thread
   as everything else; when that thread waited on an app that was slow to answer, macOS switched
   the shortcut handling off and passed ⌘-Tab on to the system. The shortcut now has a thread of its
   own and always reaches AltSwitch.
+- **Stuck switcher:** pressing ⌘-Tab twice in quick succession while AltSwitch was busy could
+  leave the switcher open, and releasing ⌘ no longer chose a window.
 
 ### Changed
 - **Smoother:** AltSwitch waits at most 0.3 s for an app that does not answer (before: up to 6 s
@@ -107,8 +113,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 First version (unsigned, withdrawn).
 
-[Unreleased]: https://github.com/brokoskokoli/altswitch/compare/v1.2.1...HEAD
-[1.2.1]: https://github.com/brokoskokoli/altswitch/compare/v1.2.0...v1.2.1
+[Unreleased]: https://github.com/brokoskokoli/altswitch/compare/v1.2.2...HEAD
+[1.2.2]: https://github.com/brokoskokoli/altswitch/compare/v1.2.0...v1.2.2
 [1.2.0]: https://github.com/brokoskokoli/altswitch/compare/v1.1.3...v1.2.0
 [1.1.3]: https://github.com/brokoskokoli/altswitch/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/brokoskokoli/altswitch/compare/v1.1.1...v1.1.2
