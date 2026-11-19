@@ -175,4 +175,24 @@ struct ShortcutStateMachineTests {
         m.end(session: 3)
         #expect(!m.isActive)
     }
+
+    @Test("Changing the shortcut while the switcher is open: releasing the key that opened it confirms")
+    func modeChangeWhileOpen() {
+        var m = openCmdTab()
+        m.mode = .optionTab
+        #expect(m.flagsChanged(keyCode: Key.leftCommand, flags: []).actions == [.confirm])
+        // From now on ⌥⇥ opens it
+        #expect(m.keyDown(keyCode: Key.tab, flags: leftOpt).actions == [.open(forward: true, session: 2)])
+    }
+
+    @Test("Esc with ⌘ still held, then Tab: a fresh opening")
+    func reopenAfterEscape() {
+        var m = openCmdTab()
+        _ = m.keyDown(keyCode: Key.escape, flags: leftCmd)
+        // Shift pressed in between: the held ⌘ counts as a new possible press (prepares the list)
+        #expect(m.flagsChanged(keyCode: leftShift, flags: leftCmd.union(.maskShift)).actions == [.triggerModifierDown])
+        #expect(m.keyDown(keyCode: Key.tab, flags: leftCmd.union(.maskShift)).actions
+            == [.open(forward: false, session: 2)])
+        #expect(m.flagsChanged(keyCode: Key.leftCommand, flags: .maskShift).actions == [.confirm])
+    }
 }
