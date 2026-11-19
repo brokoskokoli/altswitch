@@ -29,6 +29,12 @@ public class AppDelegate: NSObject, NSApplicationDelegate, HotkeyManagerDelegate
             reason: "AltSwitch must react to the shortcut immediately"
         )
 
+        // Accessibility calls wait up to 6 s for an app that does not answer. Only the app elements
+        // get a shorter timeout of their own, not the window elements read from them, and those
+        // calls run on the main thread (window list, raising the chosen window): one busy app would
+        // freeze the switcher. Cap all of them.
+        AXUIElementSetMessagingTimeout(AXUIElementCreateSystemWide(), 0.3)
+
         // First: the first contact with each app runs in the background while the overlay is
         // built, so the order tracker and the prewarm below find the apps already answering
         PerfLog.measure("launch warm up") { WindowManager.shared.warmUp() }
@@ -122,7 +128,8 @@ public class AppDelegate: NSObject, NSApplicationDelegate, HotkeyManagerDelegate
             initialIndex = (windows.count > 1) ? (windows.count - 1) : 0
         }
 
-        HotkeyManager.shared.isOverlayActive = true
+        // The tap marked the overlay active already. Not again here: the tap runs on its own thread,
+        // and if the shortcut was released in the meantime, that would reopen a closed switcher.
         PerfLog.logWhenFrameCommitted("press to overlay frame (\(windows.count) windows)", since: pressStart)
         PerfLog.measure("press show overlay") {
             overlayPanel?.show(windows: windows, initialIndex: initialIndex)

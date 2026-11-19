@@ -3,6 +3,7 @@
 import Cocoa
 import Carbon
 import ApplicationServices
+import Combine
 
 public protocol HotkeyManagerDelegate: AnyObject {
     func hotkeyTriggered(forward: Bool)
@@ -18,42 +19,60 @@ public class HotkeyManager {
     public static let shared = HotkeyManager()
 
     public weak var delegate: HotkeyManagerDelegate?
-    public var isOverlayActive: Bool = false {
-        didSet {
-            if !isOverlayActive {
-                activeTriggerModifier = nil
-                wasTriggerModifierDown = false
-                wasShiftDown = false
-                shiftWasUsedWithKey = false
-            }
-        }
+
+    /// Set from the main thread, read and reset on the tap thread.
+    public var isOverlayActive: Bool {
+        get { lock.locked { overlayActive } }
+        set { lock.locked { setOverlayActive(newValue) } }
     }
 
+    /// The tap's state. The tap runs on its own thread, so all of it is guarded by `lock`.
+    private let lock = NSLock()
+    private var overlayActive = false
     private var activeTriggerModifier: CGEventFlags?
     private var wasShiftDown: Bool = false
     private var shiftWasUsedWithKey: Bool = false
+    private var wasTriggerModifierDown = false
+    /// Copy of AppSettings.shortcutMode: the settings object belongs to the main thread
+    private var shortcutMode: ShortcutMode = .optionTab
+    private var eventTap: CFMachPort?
 
     /// The shortcut's modifier went down while the overlay is closed: a press may follow.
+    /// Called on the main thread.
     public var onTriggerModifierDown: (() -> Void)?
-    private var wasTriggerModifierDown = false
 
-    private var eventTap: CFMachPort?
+    // Main thread only
     private var runLoopSource: CFRunLoopSource?
     private var retryTimer: Timer?
+    private var settingsObserver: AnyCancellable?
+
+    /// The event tap gets its own thread. On the main run loop, any stall there (an app slow to
+    /// answer an Accessibility call, SwiftUI layout) holds the shortcut back; past about a second
+    /// macOS disables the tap and the key goes to the system, which then shows its own app switcher.
+    private lazy var tapThread: EventTapThread = {
+        let thread = EventTapThread()
+        thread.start()
+        return thread
+    }()
 
     private init() {}
 
     public func start() {
         stop()
+        lock.locked { shortcutMode = AppSettings.shared.shortcutMode }
+        settingsObserver = AppSettings.shared.$shortcutMode.sink { [weak self] mode in
+            guard let self = self else { return }
+            self.lock.locked { self.shortcutMode = mode }
+        }
         setupEventTap()
 
-        if eventTap == nil {
+        if lock.locked({ eventTap == nil }) {
             // Periodically attempt to acquire the tap once permission is granted
             retryTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
                 guard let self = self else { return }
-                if self.eventTap == nil && PermissionsManager.shared.isAccessibilityGranted {
+                if self.lock.locked({ self.eventTap == nil }) && PermissionsManager.shared.isAccessibilityGranted {
                     self.setupEventTap()
-                    if self.eventTap != nil {
+                    if self.lock.locked({ self.eventTap != nil }) {
                         self.retryTimer?.invalidate()
                         self.retryTimer = nil
                     }
@@ -65,15 +84,30 @@ public class HotkeyManager {
     public func stop() {
         retryTimer?.invalidate()
         retryTimer = nil
+        settingsObserver = nil
 
         if let source = runLoopSource {
-            CFRunLoopRemoveSource(CFRunLoopGetMain(), source, .commonModes)
+            CFRunLoopRemoveSource(tapThread.runLoop, source, .commonModes)
             runLoopSource = nil
         }
-        if let tap = eventTap {
+        let tap = lock.locked { () -> CFMachPort? in
+            defer { eventTap = nil }
+            return eventTap
+        }
+        if let tap = tap {
             CGEvent.tapEnable(tap: tap, enable: false)
             CFMachPortInvalidate(tap)
-            eventTap = nil
+        }
+    }
+
+    /// Lock must be held.
+    private func setOverlayActive(_ active: Bool) {
+        overlayActive = active
+        if !active {
+            activeTriggerModifier = nil
+            wasTriggerModifierDown = false
+            wasShiftDown = false
+            shiftWasUsedWithKey = false
         }
     }
 
@@ -105,14 +139,20 @@ public class HotkeyManager {
             return
         }
 
-        self.eventTap = tap
+        lock.locked { self.eventTap = tap }
         let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
         self.runLoopSource = source
-        CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
+        let runLoop = tapThread.runLoop
+        CFRunLoopAddSource(runLoop, source, .commonModes)
+        CFRunLoopWakeUp(runLoop)
         CGEvent.tapEnable(tap: tap, enable: true)
     }
 
+    /// Runs on the tap thread. Keep it short: macOS waits for it before passing any key on.
     private func handleEvent(proxy: CGEventTapProxy, type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {
+        lock.lock()
+        defer { lock.unlock() }
+
         if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
             if let tap = eventTap {
                 CGEvent.tapEnable(tap: tap, enable: true)
@@ -122,7 +162,7 @@ public class HotkeyManager {
         }
 
         let flags = event.flags
-        let currentMode = AppSettings.shared.shortcutMode
+        let currentMode = shortcutMode
 
         let isOptionDown = flags.contains(.maskAlternate)
         let isCmdDown = flags.contains(.maskCommand)
@@ -153,8 +193,8 @@ public class HotkeyManager {
                     shiftWasUsedWithKey = true
                 }
 
-                if !isOverlayActive {
-                    isOverlayActive = true
+                if !overlayActive {
+                    setOverlayActive(true)
                     activeTriggerModifier = triggerFlag
                     DispatchQueue.main.async { [weak self] in
                         guard let self = self else { return }
@@ -170,7 +210,7 @@ public class HotkeyManager {
             }
 
             // While overlay is active, intercept navigation keys
-            if isOverlayActive {
+            if overlayActive {
                 switch keyCode {
                 case 124: // Right Arrow
                     DispatchQueue.main.async { [weak self] in
@@ -203,14 +243,14 @@ public class HotkeyManager {
                     return nil
 
                 case 53: // Escape
-                    isOverlayActive = false
+                    setOverlayActive(false)
                     DispatchQueue.main.async { [weak self] in
                         self?.delegate?.hotkeyCancelled()
                     }
                     return nil
 
                 case 36, 49: // Return or Space
-                    isOverlayActive = false
+                    setOverlayActive(false)
                     DispatchQueue.main.async { [weak self] in
                         self?.delegate?.hotkeyConfirmed()
                     }
@@ -224,12 +264,12 @@ public class HotkeyManager {
 
         // MARK: - FlagsChanged
         if type == .flagsChanged {
-            if isOverlayActive, let trigger = activeTriggerModifier {
+            if overlayActive, let trigger = activeTriggerModifier {
                 let isTriggerStillDown = flags.contains(trigger)
 
                 if !isTriggerStillDown {
                     // Trigger modifier was released! Confirm selection and dismiss
-                    isOverlayActive = false
+                    setOverlayActive(false)
                     DispatchQueue.main.async { [weak self] in
                         self?.delegate?.hotkeyConfirmed()
                     }
@@ -258,12 +298,53 @@ public class HotkeyManager {
                 let triggerFlag: CGEventFlags = currentMode == .cmdTab ? .maskCommand : .maskAlternate
                 let isTriggerDown = flags.contains(triggerFlag)
                 if isTriggerDown && !wasTriggerModifierDown {
-                    onTriggerModifierDown?()
+                    DispatchQueue.main.async { [weak self] in
+                        self?.onTriggerModifierDown?()
+                    }
                 }
                 wasTriggerModifierDown = isTriggerDown
             }
         }
 
         return Unmanaged.passRetained(event)
+    }
+}
+
+/// A thread that only runs a run loop, for the event tap.
+private final class EventTapThread: Thread {
+    private var loop: CFRunLoop?
+    private let ready = DispatchSemaphore(value: 0)
+
+    override init() {
+        super.init()
+        name = "AltSwitch.EventTap"
+        qualityOfService = .userInteractive
+    }
+
+    /// Waits until the thread has started.
+    var runLoop: CFRunLoop {
+        ready.wait()
+        defer { ready.signal() }
+        return loop!
+    }
+
+    override func main() {
+        loop = CFRunLoopGetCurrent()
+        // A run loop without sources returns at once: a timer that never fires keeps it running
+        let keepAlive = CFRunLoopTimerCreateWithHandler(nil, .greatestFiniteMagnitude, 0, 0, 0) { _ in }
+        CFRunLoopAddTimer(loop, keepAlive, .commonModes)
+        ready.signal()
+        while !isCancelled {
+            CFRunLoopRun()
+        }
+    }
+}
+
+private extension NSLock {
+    /// NSLocking.withLock needs macOS 14.
+    func locked<T>(_ body: () throws -> T) rethrows -> T {
+        lock()
+        defer { unlock() }
+        return try body()
     }
 }
