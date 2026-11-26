@@ -27,9 +27,10 @@ private func decide(
     hidden: Bool = false,
     complete: Bool = true,
     otherSpace: Bool = false,
-    anySpace: Bool = true
+    anySpace: Bool = true,
+    focused: Bool = false
 ) -> Decision {
-    WindowFilter.decide(entry, ax: ax, appIsHidden: hidden, appListComplete: complete,
+    WindowFilter.decide(entry, ax: ax, appIsHidden: hidden, appListComplete: complete, wasFocused: focused,
                         isOnOtherSpace: { otherSpace }, isOnAnySpace: { anySpace })
 }
 
@@ -46,6 +47,14 @@ struct WindowFilterTests {
     func helpers() {
         #expect(decide(entry(layer: 25), ax: standard) == .skip)
         #expect(decide(entry(size: 40), ax: standard) == .skip)
+    }
+
+    @Test("A small window the user worked in is shown (a popup, so Alt-Tab does not jump past it)")
+    func focusedSmallWindow() {
+        #expect(decide(entry(size: 40), ax: panel, focused: true) == .onScreen)
+        #expect(decide(entry(size: 0), focused: true) == .skip)
+        #expect(decide(entry(layer: 25, size: 40), focused: true) == .skip)
+        #expect(decide(entry(size: 40, alpha: 0), ax: panel, focused: true) == .skip)
     }
 
     @Test("A transparent window is a helper, unless the app calls it a real window (fading in)")
@@ -103,5 +112,15 @@ struct WindowFilterTests {
         _ = WindowFilter.decide(entry(onscreen: false), ax: minimized, appIsHidden: false,
                                 appListComplete: true, isOnOtherSpace: count, isOnAnySpace: count)
         #expect(lookups == 0)
+    }
+
+    @Test("A modal dialog stands for the windows of its app it blocks, other apps are not touched")
+    func modalDialog() {
+        // App 1: main window 10, its password prompt 11; app 2: window 20
+        let windows: [(id: CGWindowID, pid: pid_t)] = [(11, 1), (10, 1), (20, 2)]
+        #expect(WindowFilter.blockedByModal(windows, modalIDs: [11]) == [10])
+        #expect(WindowFilter.blockedByModal(windows, modalIDs: []) == [])
+        // A modal window that is not listed (closed, or a helper) blocks nothing
+        #expect(WindowFilter.blockedByModal(windows, modalIDs: [99]) == [])
     }
 }

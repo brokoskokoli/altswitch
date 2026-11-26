@@ -34,17 +34,21 @@ enum WindowFilter {
 
     /// - Parameters:
     ///   - appListComplete: the app answered and reported all its windows
+    ///   - wasFocused: the window had keyboard focus at some point (WindowOrderTracker)
     ///   - isOnOtherSpace, isOnAnySpace: asked only when needed (window server round trips)
     static func decide(
         _ entry: Entry,
         ax: AXFacts?,
         appIsHidden: Bool,
         appListComplete: Bool,
+        wasFocused: Bool = false,
         isOnOtherSpace: () -> Bool,
         isOnAnySpace: () -> Bool
     ) -> Decision {
-        guard entry.layer == 0,
-              entry.bounds.width >= minimumSize, entry.bounds.height >= minimumSize else {
+        // A small window the user worked in (a popup, a mini player) is a real window: skipping
+        // it would make the switcher jump past it to the window used before
+        let isLargeEnough = entry.bounds.width >= minimumSize && entry.bounds.height >= minimumSize
+        guard entry.layer == 0, isLargeEnough || (wasFocused && !entry.bounds.isEmpty) else {
             return .skip
         }
 
@@ -73,5 +77,14 @@ enum WindowFilter {
             return .skip
         }
         return .offScreen
+    }
+
+    /// Windows blocked by a modal dialog of their app (a password prompt, an alert). While it is
+    /// open the app takes input only there: switching to another of its windows lands on the
+    /// dialog again, so the switcher would get stuck on it. The dialog stands for all of them.
+    /// - Parameter modalIDs: windows the apps report as modal; only those in the list count
+    static func blockedByModal(_ windows: [(id: CGWindowID, pid: pid_t)], modalIDs: Set<CGWindowID>) -> Set<CGWindowID> {
+        let blockedPIDs = Set(windows.filter { modalIDs.contains($0.id) }.map(\.pid))
+        return Set(windows.filter { blockedPIDs.contains($0.pid) && !modalIDs.contains($0.id) }.map(\.id))
     }
 }

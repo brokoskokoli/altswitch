@@ -10,6 +10,9 @@ public class WindowOrderTracker {
 
     /// Window IDs, most recently focused first. Main thread only.
     private var recentWindowIDs: [CGWindowID] = []
+    /// The IDs in recentWindowIDs that really had focus, not just seeded from the stacking order.
+    /// Main thread only.
+    private var focusedWindowIDs = Set<CGWindowID>()
     private var observers: [pid_t: AXObserver] = [:]
     /// When registering for an app last failed. Every press tries the apps without an observer
     /// again, one after the other on the main thread: an app that does not answer would cost up
@@ -44,15 +47,25 @@ public class WindowOrderTracker {
         }
     }
 
-    /// Orders windows by last focus. Windows never seen focused keep their relative order behind them.
+    /// Brings the order up to date before a window list is built.
     /// `regularApps`: the running regular apps if the caller has them (saves reading them again).
-    public func sortedByRecentUse(_ windows: [WindowItem], regularApps: [NSRunningApplication]? = nil) -> [WindowItem] {
+    public func refresh(regularApps: [NSRunningApplication]? = nil) {
         // Picks up apps that were not ready before, or Accessibility permission granted after launch
         observeRunningApps(regularApps)
         // The frontmost window is the current one, even if its notification was missed
         if let front = NSWorkspace.shared.frontmostApplication {
             noteFocusedWindow(of: front.processIdentifier)
         }
+    }
+
+    /// The user worked in this window (it had keyboard focus), so it is a real window even if it
+    /// looks like a helper, e.g. a small popup
+    public func wasFocused(_ id: CGWindowID) -> Bool {
+        focusedWindowIDs.contains(id)
+    }
+
+    /// Orders windows by last focus. Windows never seen focused keep their relative order behind them.
+    public func sortedByRecentUse(_ windows: [WindowItem]) -> [WindowItem] {
         var rank: [CGWindowID: Int] = [:]
         for (index, id) in recentWindowIDs.enumerated() where rank[id] == nil {
             rank[id] = index
@@ -72,8 +85,12 @@ public class WindowOrderTracker {
         }
         recentWindowIDs.removeAll { $0 == id }
         recentWindowIDs.insert(id, at: 0)
+        focusedWindowIDs.insert(id)
         // Closed windows linger here; a short list is enough to order what is open
         if recentWindowIDs.count > 200 {
+            for dropped in recentWindowIDs[200...] {
+                focusedWindowIDs.remove(dropped)
+            }
             recentWindowIDs.removeLast(recentWindowIDs.count - 200)
         }
     }

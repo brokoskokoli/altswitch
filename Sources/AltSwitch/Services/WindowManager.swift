@@ -136,6 +136,8 @@ private struct AXWindowInfo {
     let title: String
     /// A document or dialog window, not a panel, tooltip, sheet or popover
     let isStandard: Bool
+    /// A dialog the app runs modally: its other windows take no input while it is open
+    let isModal: Bool
 }
 
 public class WindowManager {
@@ -286,6 +288,8 @@ public class WindowManager {
 
         let regularApps = takeRegularApps()
         lastRegularPIDs = (Set(regularApps.map(\.processIdentifier)), CACurrentMediaTime())
+        let tracker = WindowOrderTracker.shared
+        tracker.refresh(regularApps: regularApps)
         var appByPID: [pid_t: NSRunningApplication] = [:]
         for app in regularApps {
             appByPID[app.processIdentifier] = app
@@ -362,6 +366,7 @@ public class WindowManager {
                 ax: ax.map { WindowFilter.AXFacts(isStandard: $0.isStandard, isMinimized: $0.isMinimized) },
                 appIsHidden: app.isHidden,
                 appListComplete: completeAXPIDs.contains(pid),
+                wasFocused: tracker.wasFocused(wid),
                 isOnOtherSpace: { isOnOtherSpace(wid) },
                 isOnAnySpace: { !(SkyLight.spaces(of: wid) ?? []).isEmpty }
             )
@@ -428,11 +433,17 @@ public class WindowManager {
             }
         }
 
-        let all = onScreen + offScreen
+        // An open modal dialog stands for all windows of its app (WindowFilter.blockedByModal)
+        let modalIDs = Set(axWindowByID.values.filter { $0.isModal && !$0.isMinimized }.map(\.id))
+        var all = onScreen + offScreen
+        if !modalIDs.isEmpty {
+            let blocked = WindowFilter.blockedByModal(all.map { ($0.id, $0.pid) }, modalIDs: modalIDs)
+            all.removeAll { blocked.contains($0.id) }
+        }
         lastListSize = (all.count, Set(all.map(\.pid)).count)
         // Screen stacking order groups windows by app (activating an app raises all its windows):
         // order by when each window last had focus instead
-        return WindowOrderTracker.shared.sortedByRecentUse(all, regularApps: regularApps)
+        return tracker.sortedByRecentUse(all)
     }
 
     /// The app's windows with the attributes needed to sort out junk, one Accessibility round trip
@@ -446,7 +457,7 @@ public class WindowManager {
             return nil
         }
 
-        let attributes = [kAXRoleAttribute, kAXSubroleAttribute, kAXMinimizedAttribute, kAXTitleAttribute] as CFArray
+        let attributes = [kAXRoleAttribute, kAXSubroleAttribute, kAXMinimizedAttribute, kAXTitleAttribute, kAXModalAttribute] as CFArray
         var infos: [AXWindowInfo] = []
         for window in windows {
             var values: CFArray?
@@ -454,18 +465,20 @@ public class WindowManager {
             var subrole: String?
             var isMinimized = false
             var title = ""
+            var isModal = false
             let result = AXUIElementCopyMultipleAttributeValues(window, attributes, AXCopyMultipleAttributeOptions(rawValue: 0), &values)
             // The app stopped answering: each further window would wait for the timeout again.
             // Keep what was read and mark the list incomplete; with nothing read it counts as no answer.
             if result == .cannotComplete {
                 return infos.isEmpty ? nil : AXWindowList(windows: infos, isComplete: false)
             }
-            if result == .success, let array = values as? [AnyObject], array.count == 4 {
+            if result == .success, let array = values as? [AnyObject], array.count == 5 {
                 // Attributes that could not be read come back as AXError values and fail these casts
                 role = array[0] as? String
                 subrole = array[1] as? String
                 isMinimized = array[2] as? Bool ?? false
                 title = array[3] as? String ?? ""
+                isModal = array[4] as? Bool ?? false
             }
 
             var wid: CGWindowID = 0
@@ -475,7 +488,8 @@ public class WindowManager {
 
             let isStandard = role == kAXWindowRole as String
                 && (subrole == kAXStandardWindowSubrole as String || subrole == kAXDialogSubrole as String)
-            infos.append(AXWindowInfo(element: window, id: wid, isMinimized: isMinimized, title: title, isStandard: isStandard))
+            infos.append(AXWindowInfo(element: window, id: wid, isMinimized: isMinimized, title: title,
+                                      isStandard: isStandard, isModal: isModal && role == kAXWindowRole as String))
         }
         return AXWindowList(windows: infos, isComplete: true)
     }
