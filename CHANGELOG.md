@@ -6,6 +6,16 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.3.2] - 2026-11-26
+
+### Fixed
+- **Modal dialogs:** while an app shows a modal dialog (e.g. the password prompt of the Windows
+  App), the switcher lists only the dialog, not the greyed-out windows behind it. A quick `⌘-Tab`
+  from the dialog went to its own blocked window and stayed on the dialog; now it goes to the
+  window used before.
+- **Small popups:** a small window you worked in (a popup, a mini player) is listed, so `⌘-Tab`
+  from it no longer skips it and jumps to the window used before.
+
 ## [1.3.1] - 2026-11-19
 
 ### Changed
@@ -170,7 +180,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 First version (unsigned, withdrawn).
 
-[Unreleased]: https://github.com/brokoskokoli/altswitch/compare/v1.3.1...HEAD
+[Unreleased]: https://github.com/brokoskokoli/altswitch/compare/v1.3.2...HEAD
+[1.3.2]: https://github.com/brokoskokoli/altswitch/compare/v1.3.1...v1.3.2
 [1.3.1]: https://github.com/brokoskokoli/altswitch/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/brokoskokoli/altswitch/compare/v1.2.3...v1.3.0
 [1.2.3]: https://github.com/brokoskokoli/altswitch/compare/v1.2.2...v1.2.3
