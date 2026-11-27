@@ -339,6 +339,8 @@ public class WindowManager {
         var onScreen: [WindowItem] = []
         var offScreen: [WindowItem] = []
         var included = Set<CGWindowID>()
+        // Apps with a visible window they do not list themselves: it may be a sheet
+        var pidsWithUnlistedWindows = Set<pid_t>()
 
         for winInfo in infoList {
             guard let layer = winInfo[kCGWindowLayer as String] as? Int,
@@ -374,6 +376,9 @@ public class WindowManager {
                 continue
             }
             let isMinimized = decision == .minimized
+            if ax == nil && isVisible && completeAXPIDs.contains(pid) {
+                pidsWithUnlistedWindows.insert(pid)
+            }
 
             let appName = (winInfo[kCGWindowOwnerName as String] as? String) ?? app.localizedName ?? "App"
             var title = cgTitle
@@ -440,6 +445,14 @@ public class WindowManager {
             let blocked = WindowFilter.blockedByModal(all.map { ($0.id, $0.pid) }, modalIDs: modalIDs)
             all.removeAll { blocked.contains($0.id) }
         }
+        var sheetParents: [CGWindowID: CGWindowID] = [:]
+        for pid in pidsWithUnlistedWindows {
+            sheetParents.merge(self.sheetParents(of: axWindowsByPID[pid] ?? [])) { first, _ in first }
+        }
+        if !sheetParents.isEmpty {
+            let hidden = WindowFilter.hiddenSheets(listed: Set(all.map(\.id)), sheetParents: sheetParents)
+            all.removeAll { hidden.contains($0.id) }
+        }
         lastListSize = (all.count, Set(all.map(\.pid)).count)
         // Screen stacking order groups windows by app (activating an app raises all its windows):
         // order by when each window last had focus instead
@@ -492,6 +505,31 @@ public class WindowManager {
                                       isStandard: isStandard, isModal: isModal && role == kAXWindowRole as String))
         }
         return AXWindowList(windows: infos, isComplete: true)
+    }
+
+    /// The sheets on the app's visible windows: sheet → its window. Sheets are not in the app's
+    /// window list, only among the children of their window.
+    private func sheetParents(of windows: [AXWindowInfo]) -> [CGWindowID: CGWindowID] {
+        guard let getWindow = dynamicAXUIElementGetWindow else { return [:] }
+        var parents: [CGWindowID: CGWindowID] = [:]
+        for window in windows where window.id != 0 && !window.isMinimized {
+            AXUIElementSetMessagingTimeout(window.element, 0.2)
+            var childrenValue: AnyObject?
+            guard AXUIElementCopyAttributeValue(window.element, kAXChildrenAttribute as CFString, &childrenValue) == .success,
+                  let children = childrenValue as? [AXUIElement] else {
+                continue
+            }
+            for child in children {
+                var role: AnyObject?
+                var sheetID: CGWindowID = 0
+                if AXUIElementCopyAttributeValue(child, kAXRoleAttribute as CFString, &role) == .success,
+                   role as? String == kAXSheetRole as String,
+                   getWindow(child, &sheetID) == .success, sheetID != 0 {
+                    parents[sheetID] = window.id
+                }
+            }
+        }
+        return parents
     }
 
     private func axFrame(of window: AXUIElement) -> CGRect? {

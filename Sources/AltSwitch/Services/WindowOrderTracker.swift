@@ -78,6 +78,8 @@ public class WindowOrderTracker {
     }
 
     public func noteFocused(window: AXUIElement) {
+        // A sheet (e.g. a password prompt) has focus: its window is the one in the switcher
+        let window = parentWindow(ofSheet: window) ?? window
         var id: CGWindowID = 0
         guard let getWindow = dynamicAXUIElementGetWindow,
               getWindow(window, &id) == .success, id != 0 else {
@@ -93,6 +95,19 @@ public class WindowOrderTracker {
             }
             recentWindowIDs.removeLast(recentWindowIDs.count - 200)
         }
+    }
+
+    private func parentWindow(ofSheet element: AXUIElement) -> AXUIElement? {
+        AXUIElementSetMessagingTimeout(element, 0.1)
+        var role: AnyObject?
+        var parent: AnyObject?
+        guard AXUIElementCopyAttributeValue(element, kAXRoleAttribute as CFString, &role) == .success,
+              role as? String == kAXSheetRole as String,
+              AXUIElementCopyAttributeValue(element, kAXWindowAttribute as CFString, &parent) == .success,
+              let parent = parent, CFGetTypeID(parent) == AXUIElementGetTypeID() else {
+            return nil
+        }
+        return (parent as! AXUIElement)
     }
 
     private func noteFocusedWindow(of pid: pid_t) {

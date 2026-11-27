@@ -123,4 +123,13 @@ struct WindowFilterTests {
         // A modal window that is not listed (closed, or a helper) blocks nothing
         #expect(WindowFilter.blockedByModal(windows, modalIDs: [99]) == [])
     }
+
+    @Test("A sheet is left out when its window is listed, the window stands for it")
+    func sheets() {
+        // Window 10 with its password sheet 11, window 20 of another app
+        #expect(WindowFilter.hiddenSheets(listed: [10, 11, 20], sheetParents: [11: 10]) == [11])
+        // Its window is not listed: the sheet stays
+        #expect(WindowFilter.hiddenSheets(listed: [11, 20], sheetParents: [11: 10]) == [])
+        #expect(WindowFilter.hiddenSheets(listed: [10, 20], sheetParents: [11: 10]) == [])
+    }
 }

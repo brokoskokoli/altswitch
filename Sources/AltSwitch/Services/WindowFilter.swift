@@ -87,4 +87,13 @@ enum WindowFilter {
         let blockedPIDs = Set(windows.filter { modalIDs.contains($0.id) }.map(\.pid))
         return Set(windows.filter { blockedPIDs.contains($0.pid) && !modalIDs.contains($0.id) }.map(\.id))
     }
+
+    /// Sheets to leave out (a password prompt slid out of a window, as in the Windows App). The
+    /// window server lists a sheet as a window of its own, but it belongs to its window: switching
+    /// to that window shows the sheet, and the window takes no input without it. Its window stands
+    /// for it; a sheet whose window is not listed stays, so the two do not vanish together.
+    /// - Parameter sheetParents: sheet → the window it belongs to
+    static func hiddenSheets(listed: Set<CGWindowID>, sheetParents: [CGWindowID: CGWindowID]) -> Set<CGWindowID> {
+        Set(sheetParents.filter { listed.contains($0.key) && listed.contains($0.value) }.keys)
+    }
 }
