@@ -6,6 +6,14 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [1.3.3] - 2026-11-27
+
+### Fixed
+- **Sheets:** a sheet that slides out of a window (e.g. *Enter Your Credentials* in the Windows
+  App) is no longer listed as a window of its own; its window stands for it. A quick `⌘-Tab`
+  from the sheet went to its own window and landed on the sheet again; now it leaves it. 1.3.2
+  covered only modal dialogs that are windows of their own.
+
 ## [1.3.2] - 2026-11-26
 
 ### Fixed
@@ -180,7 +188,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 First version (unsigned, withdrawn).
 
-[Unreleased]: https://github.com/brokoskokoli/altswitch/compare/v1.3.2...HEAD
+[Unreleased]: https://github.com/brokoskokoli/altswitch/compare/v1.3.3...HEAD
+[1.3.3]: https://github.com/brokoskokoli/altswitch/compare/v1.3.2...v1.3.3
 [1.3.2]: https://github.com/brokoskokoli/altswitch/compare/v1.3.1...v1.3.2
 [1.3.1]: https://github.com/brokoskokoli/altswitch/compare/v1.3.0...v1.3.1
 [1.3.0]: https://github.com/brokoskokoli/altswitch/compare/v1.2.3...v1.3.0
